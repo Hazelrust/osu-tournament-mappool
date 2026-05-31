@@ -1,32 +1,9 @@
 import { useEffect, useState } from 'react';
-import Papa from 'papaparse';
 import { Loader2, Search, Filter, Plus } from 'lucide-react';
-import pLimit from 'p-limit';
 import MapCard from './components/MapCard';
 import ImporterModal from './components/ImporterModal';
-import { calculateMods, extractBeatmapId } from './lib/osuUtils';
 
-const SHEET1_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?output=csv';
-const SHEET2_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?gid=1413426737&single=true&output=csv';
 
-// The Vercel backend now handles authentication securely.
-
-// Hardcoded list of maps that are permanently deleted from osu! servers
-// We block these to prevent annoying 404 errors in the console.
-const DELETED_MAP_IDS = ["4376789", "4384670", "4393055"];
-
-function parseOsuMods(modStr: string): string[] {
-  const normalized = modStr.toUpperCase().replace(/[0-9]/g, '');
-  const mods = [];
-  if (normalized.includes('HD')) mods.push('HD');
-  if (normalized.includes('HR')) mods.push('HR');
-  if (normalized.includes('DT')) mods.push('DT');
-  if (normalized.includes('NC')) mods.push('NC');
-  if (normalized.includes('EZ')) mods.push('EZ');
-  if (normalized.includes('FL')) mods.push('FL');
-  if (normalized.includes('HT')) mods.push('HT');
-  return mods;
-}
 
 function App() {
   const [maps, setMaps] = useState<any[]>([]);
@@ -47,144 +24,26 @@ function App() {
   useEffect(() => {
     const fetchMappool = async () => {
       try {
-        // Use the new serverless backend that handles auth automatically
-        const response1 = await fetch(`${SHEET1_URL}&t=${Date.now()}`);
-        const text1 = await response1.text();
+
+        const cacheKey = 'mappool_database';
         
-        const response2 = await fetch(`${SHEET2_URL}&t=${Date.now()}`);
-        const text2 = await response2.text();
+        // Always try to load instantly from localStorage if it exists
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          setMaps(JSON.parse(cached));
+          setLoading(false);
+        }
+
+        // Fetch the fresh full database from the new backend
+        const res = await fetch('/api/mappool');
+        if (!res.ok) throw new Error('Failed to load mappool from server');
         
-        const parseCSV = (text: string, defaultTourney: string) => {
-          return new Promise<any[]>((resolve) => {
-            Papa.parse(text, {
-              header: true,
-              complete: (results) => {
-                const mapped = (results.data as any[]).map(row => ({
-                  ...row,
-                  Tournament: row.Tournament || defaultTourney
-                }));
-                resolve(mapped);
-              }
-            });
-          });
-        };
-
-        const [data1, data2] = await Promise.all([
-          parseCSV(text1, 'Personal'),
-          parseCSV(text2, 'OWC Unknown')
-        ]);
+        const fullMappool = await res.json();
         
-        const combinedData = [...data1, ...data2];
-        const limit = pLimit(20); // Only 20 concurrent requests to avoid rate limits
-
-        // We will flush the fetched maps to the UI in batches so the user doesn't have to wait for all 240
-        let currentBatch: any[] = [];
-        let batchTimer: any = null;
-
-        const flushBatch = () => {
-          if (currentBatch.length > 0) {
-            const batchToFlush = [...currentBatch]; // Clone it so it doesn't get wiped before React processes it!
-            currentBatch = [];
-            
-            setMaps(prev => {
-              // prevent duplicates just in case
-              const newMaps = batchToFlush.filter(newMap => !prev.some(p => p.id === newMap.id && p.modSlot === newMap.modSlot));
-              return [...prev, ...newMaps];
-            });
-          }
-        };
-
-        // Instantly hide the full-page loader! Maps will stream in smoothly.
+        // Save the new data and update the UI
+        localStorage.setItem(cacheKey, JSON.stringify(fullMappool));
+        setMaps(fullMappool);
         setLoading(false);
-
-        const fetchPromises = combinedData.map((row) => limit(async () => {
-          const modSlot = row['Mod'];
-          const mapUrl = row['Map URL'];
-          const tournament = row['Tournament'];
-
-          let beatmapId = null;
-          if (mapUrl && typeof mapUrl === 'string') {
-            beatmapId = extractBeatmapId(mapUrl);
-          }
-
-          if (!beatmapId || DELETED_MAP_IDS.includes(beatmapId)) return null;
-
-          const cacheKey = `osu_map_${beatmapId}_${modSlot}`;
-          const cachedData = localStorage.getItem(cacheKey);
-          
-          let finalMapObj = null;
-
-          if (cachedData) {
-            const parsed = JSON.parse(cachedData);
-            if (parsed.error) return null; // Skip known failures
-            
-            // Ensure tournament info is updated in cache just in case it changed
-            parsed.tournament = tournament;
-            finalMapObj = parsed;
-          } else {
-            try {
-              // Use the Vercel backend which caches responses
-              const apiRes = await fetch(`/api/beatmap?id=${beatmapId}`);
-              
-              if (!apiRes.ok) {
-                 // Cache the failure so we don't spam it next time
-                 localStorage.setItem(cacheKey, JSON.stringify({ error: true }));
-                 return null;
-              }
-              
-              const mapData = await apiRes.json();
-              const modArray = parseOsuMods(modSlot);
-              
-              // Use the Vercel attributes backend which translates our GET request into an osu POST request for caching
-              const modsQuery = modArray.join(',');
-              const attrRes = await fetch(`/api/attributes?id=${beatmapId}&mods=${modsQuery}`);
-
-              if (attrRes.ok) {
-                 const attrData = await attrRes.json();
-                 if (attrData.attributes?.star_rating) {
-                   mapData.difficulty_rating = attrData.attributes.star_rating;
-                 }
-              }
-
-              const calculatedStats = calculateMods({
-                cs: mapData.cs,
-                ar: mapData.ar,
-                accuracy: mapData.accuracy,
-                drain: mapData.drain,
-                bpm: mapData.bpm
-              }, modSlot);
-
-              finalMapObj = {
-                ...mapData,
-                calculatedStats,
-                modSlot,
-                tournament
-              };
-              
-              localStorage.setItem(cacheKey, JSON.stringify(finalMapObj));
-            } catch (err) {
-              console.error("Failed to fetch map", beatmapId, err);
-              return null;
-            }
-          }
-
-          if (finalMapObj) {
-            currentBatch.push(finalMapObj);
-            if (!batchTimer) {
-              batchTimer = setTimeout(() => {
-                flushBatch();
-                batchTimer = null;
-              }, 300); // Flush UI updates every 300ms
-            }
-          }
-          return finalMapObj;
-        }));
-
-        // Final flush when absolutely everything is done
-        Promise.all(fetchPromises).then(() => {
-          if (batchTimer) clearTimeout(batchTimer);
-          flushBatch();
-        });
       } catch (err: any) {
         console.error("Failed to fetch data", err);
         setError(err.message || "Failed to load maps");
