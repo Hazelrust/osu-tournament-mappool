@@ -58,33 +58,38 @@ function App() {
     const fetchMappool = async () => {
       try {
         const token = await getOsuToken();
-        const response = await fetch(CSV_URL);
+        // Add a random timestamp to completely bypass Google Sheets' aggressive 5-minute caching
+        const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
         const text = await response.text();
         
         Papa.parse(text, {
           header: true,
           complete: async (results) => {
-            const parsedMaps = [];
-            for (const row of results.data as any[]) {
+            const fetchPromises = (results.data as any[]).map(async (row) => {
               const modSlot = row['Mod'];
               const mapUrl = row['Map URL'];
               
-              if (!modSlot || !mapUrl) continue;
+              if (!modSlot || !mapUrl) return null;
 
               const beatmapId = extractBeatmapId(mapUrl);
-              if (!beatmapId) continue;
+              if (!beatmapId) return null;
+
+              const cacheKey = `osu_map_${beatmapId}_${modSlot}`;
+              const cachedData = localStorage.getItem(cacheKey);
+              if (cachedData) {
+                return JSON.parse(cachedData);
+              }
 
               try {
                 const apiRes = await fetch(`/api/v2/beatmaps/${beatmapId}`, {
                   headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (!apiRes.ok) continue;
+                if (!apiRes.ok) return null;
                 
                 const mapData = await apiRes.json();
                 
                 const modArray = parseOsuMods(modSlot);
                 
-                // Fetch the actual difficulty attributes with the mods applied for accurate Star Rating
                 const attrRes = await fetch(`/api/v2/beatmaps/${beatmapId}/attributes`, {
                   method: 'POST',
                   headers: { 
@@ -112,16 +117,22 @@ function App() {
                   bpm: mapData.bpm
                 }, modSlot);
 
-                parsedMaps.push({
+                const finalMapObj = {
                   ...mapData,
                   calculatedStats,
                   modSlot
-                });
+                };
+                
+                localStorage.setItem(cacheKey, JSON.stringify(finalMapObj));
+                return finalMapObj;
               } catch (err) {
                 console.error("Failed to fetch map", beatmapId, err);
+                return null;
               }
-            }
-            setMaps(parsedMaps);
+            });
+
+            const resolvedMaps = await Promise.all(fetchPromises);
+            setMaps(resolvedMaps.filter(map => map !== null));
             setLoading(false);
           }
         });
