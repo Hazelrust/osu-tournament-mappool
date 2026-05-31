@@ -53,6 +53,33 @@ function App() {
         localStorage.setItem(cacheKey, JSON.stringify(fullMappool));
         setMaps(fullMappool);
         setLoading(false);
+
+        // Asynchronously fetch accurate Star Ratings for modded maps in the background
+        const moddedMaps = fullMappool.filter((m: any) => m.modSlot && (m.modSlot.includes('DT') || m.modSlot.includes('HR') || m.modSlot.includes('EZ') || m.modSlot.includes('HT') || m.modSlot.includes('NC')));
+        if (moddedMaps.length > 0) {
+          fetch('/api/attributes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ maps: moddedMaps.map((m: any) => ({ id: m.id, mods: m.modSlot })) })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.results) {
+              setMaps(prevMaps => {
+                const updated = prevMaps.map(map => {
+                  const attr = data.results.find((r: any) => String(r.id) === String(map.id));
+                  if (attr && attr.star_rating) {
+                    return { ...map, difficulty_rating: attr.star_rating };
+                  }
+                  return map;
+                });
+                localStorage.setItem(cacheKey, JSON.stringify(updated));
+                return updated;
+              });
+            }
+          })
+          .catch(e => console.error("Failed to fetch background attributes", e));
+        }
       } catch (err: any) {
         console.error("Failed to fetch data", err);
         setError(err.message || "Failed to load maps");

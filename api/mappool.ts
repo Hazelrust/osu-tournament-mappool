@@ -137,45 +137,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const beatmaps = bulkData.beatmaps || [];
       
       // Match returned maps back to their rows
-      
-      // Extract modded maps to fetch accurate star rating
-      const attrPromises = beatmaps.map(async (mapData: any) => {
-        const rowData = chunk.find(c => String(c.beatmapId) === String(mapData.id));
-        if (!rowData) return { id: mapData.id, star_rating: null };
-        const modStr = (rowData.modSlot || '').toUpperCase();
-        
-        const modsObj: any[] = [];
-        if (modStr.includes('DT')) modsObj.push({ acronym: 'DT' });
-        else if (modStr.includes('NC')) modsObj.push({ acronym: 'NC' });
-        else if (modStr.includes('HT')) modsObj.push({ acronym: 'HT' });
-        
-        if (modStr.includes('HR')) modsObj.push({ acronym: 'HR' });
-        else if (modStr.includes('EZ')) modsObj.push({ acronym: 'EZ' });
-
-        if (modsObj.length === 0) return { id: mapData.id, star_rating: null };
-
-        try {
-          const attrRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${mapData.id}/attributes`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ruleset: "osu", mods: modsObj })
-          });
-          if (attrRes.ok) {
-            const attr = await attrRes.json();
-            return { id: mapData.id, star_rating: attr.attributes?.star_rating };
-          }
-        } catch (e) {
-          // ignore
-        }
-        return { id: mapData.id, star_rating: null };
-      });
-      
-      const attrResults = await Promise.all(attrPromises);
-
       for (const mapData of beatmaps) {
         const rowData = chunk.find(c => String(c.beatmapId) === String(mapData.id));
         if (!rowData) continue;
-        
         const modSlot = rowData.modSlot;
         
         const calculatedStats = calculateMods({
@@ -185,12 +149,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           drain: mapData.drain,
           bpm: mapData.bpm
         }, modSlot);
-
-        // Override difficulty rating if we got a real one from attributes API
-        const realAttr = attrResults.find(a => String(a.id) === String(mapData.id));
-        if (realAttr && realAttr.star_rating) {
-          mapData.difficulty_rating = realAttr.star_rating;
-        }
 
         finalResult.push({
           ...mapData,
