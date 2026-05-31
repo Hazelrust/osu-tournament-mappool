@@ -53,14 +53,14 @@ const ARCHETYPE_MAP: Record<string, string> = {
 
 function getModColor(modSlot: string) {
   const mod = (modSlot || '').toUpperCase();
-  if (mod.startsWith('NM')) return 'bg-sky-500 text-white';
-  if (mod.startsWith('HR')) return 'bg-red-600 text-white';
-  if (mod.startsWith('HD')) return 'bg-yellow-400 text-slate-900';
-  if (mod.startsWith('DT')) return 'bg-purple-500 text-white';
-  if (mod.startsWith('EZ')) return 'bg-green-500 text-white';
-  if (mod.startsWith('FM')) return 'bg-orange-500 text-white';
-  if (mod.startsWith('TB')) return 'bg-[#1a1a24] text-white border border-slate-600 shadow-md';
-  return 'bg-slate-600 text-white';
+  if (mod.startsWith('NM')) return 'bg-sky-500/90 text-white';
+  if (mod.startsWith('HR')) return 'bg-red-600/90 text-white';
+  if (mod.startsWith('HD')) return 'bg-yellow-500/90 text-slate-900';
+  if (mod.startsWith('DT')) return 'bg-purple-600/90 text-white';
+  if (mod.startsWith('EZ')) return 'bg-green-600/90 text-white';
+  if (mod.startsWith('FM')) return 'bg-orange-500/90 text-white';
+  if (mod.startsWith('TB')) return 'bg-black text-white border border-slate-700 shadow-[0_0_10px_rgba(0,0,0,0.5)]';
+  return 'bg-slate-600/90 text-white';
 }
 
 interface MapCardProps {
@@ -94,44 +94,44 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
   const tourneyStage = getTourneySub(tourneyName, tourneyGroup);
 
   return (
-    <div className="group relative bg-[#1c1c24] rounded-lg overflow-hidden border border-white/5 hover:border-[#ff66aa]/50 transition-all duration-200">
+    <div className="group relative bg-[#111115] rounded-xl overflow-hidden border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:border-[#ff66aa]/50 hover:shadow-[0_4px_30px_rgba(255,102,170,0.2)] transition-all duration-300">
       
       {/* Background Image Wrapper */}
       {mapData.beatmapset?.covers?.cover && (
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-200"
+          className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
           style={{ backgroundImage: `url(${mapData.beatmapset.covers.cover})` }}
         />
       )}
       
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#111115] via-[#111115]/80 to-transparent z-10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#111115] via-[#111115]/60 to-[#111115]/30 z-10" />
 
       {/* Content */}
       <div className="relative z-20 p-3 sm:p-4 h-full flex flex-col">
         
         {/* Top Header: Mod & Difficulty */}
         <div className="flex justify-between items-start mb-4 sm:mb-6">
-          <div className="flex flex-col gap-1 items-start">
-            <span className={`font-black text-lg sm:text-xl px-2 sm:px-3 py-0.5 rounded-sm tracking-tight ${getModColor(modSlot)}`}>
+          <div className="flex flex-col gap-1.5 items-start">
+            <span className={`font-black text-lg sm:text-xl px-2 sm:px-3 py-0.5 rounded shadow-[0_0_15px_rgba(0,0,0,0.5)] tracking-tight ${getModColor(modSlot)}`}>
               {modSlot}
             </span>
             {archetype && (
-              <span className="text-[10px] font-bold tracking-widest uppercase text-slate-300 bg-black/60 px-2 py-0.5 rounded-sm">
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-slate-200 bg-black/60 px-2 py-0.5 rounded backdrop-blur-md border border-white/10 shadow-sm">
                 {archetype}
               </span>
             )}
             {tourneyGroup && (
-              <div className="flex gap-1 mt-0.5">
-                <span className={`text-[10px] sm:text-[11px] uppercase font-bold px-1.5 py-0.5 rounded-sm ${
+              <div className="flex gap-1.5 mt-0.5">
+                <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-sm backdrop-blur-md ${
                   tourneyGroup === 'Personal' 
-                    ? 'bg-blue-900 text-blue-200'
-                    : 'bg-orange-900 text-orange-200'
+                    ? 'bg-blue-900/60 text-blue-200 border border-blue-500/30'
+                    : 'bg-orange-900/60 text-orange-200 border border-orange-500/30'
                 }`}>
                   {tourneyGroup}
                 </span>
                 {tourneyStage && (
-                  <span className="text-[10px] sm:text-[11px] uppercase font-bold px-1.5 py-0.5 rounded-sm bg-white/10 text-slate-200">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-sm backdrop-blur-md bg-white/10 text-slate-200 border border-white/20">
                     {tourneyStage}
                   </span>
                 )}
@@ -140,11 +140,11 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
           </div>
           
           <div className="flex flex-col items-end gap-1.5">
-            <div className="flex items-center gap-1 bg-black/80 px-2 py-1 rounded-sm border border-yellow-500/30">
-              <span className="font-black text-yellow-400 text-sm sm:text-base">
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 backdrop-blur-md px-2 sm:px-3 py-1 rounded-lg border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+              <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 text-base sm:text-lg">
                 {Number(mapData.difficulty_rating).toFixed(2)}
               </span>
-              <span className="text-yellow-400 text-xs">★</span>
+              <span className="text-yellow-400 text-xs sm:text-sm drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]">★</span>
             </div>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
         {/* Middle: Map Info */}
         <div className="mt-auto pt-4 sm:pt-6 flex flex-col gap-1 relative z-40 pointer-events-auto">
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-lg sm:text-xl font-bold text-white leading-tight line-clamp-1 group-hover:text-[#ff66aa] transition-colors">
+            <h3 className="text-xl sm:text-2xl font-black text-white leading-tight line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-pink-400 group-hover:to-indigo-400 transition-all drop-shadow-md">
               {mapData.beatmapset?.title}
             </h3>
             {mapData.beatmapset_id && onTogglePreview && (
@@ -163,10 +163,10 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
                   onTogglePreview(mapData.id || '', `https://b.ppy.sh/preview/${mapData.beatmapset_id}.mp3`);
                 }}
                 title="Preview Song"
-                className={`shrink-0 p-1.5 rounded-full transition-all duration-200 ${
+                className={`shrink-0 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${
                   playingMapId === mapData.id 
-                    ? 'bg-[#ff66aa] text-white'
-                    : 'bg-black/60 text-slate-300 hover:bg-[#ff66aa] hover:text-white'
+                    ? 'bg-[#ff66aa] border-[#ff66aa] shadow-[0_0_15px_rgba(255,102,170,0.6)] text-white scale-110'
+                    : 'bg-black/40 border-white/10 hover:bg-[#ff66aa]/80 hover:border-[#ff66aa] hover:shadow-[0_0_10px_rgba(255,102,170,0.4)] text-slate-300 hover:text-white'
                 }`}
               >
                 {playingMapId === mapData.id ? (
@@ -177,7 +177,7 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
               </button>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-slate-300 line-clamp-1">
+          <p className="text-xs sm:text-sm font-semibold text-pink-300/90 line-clamp-1 drop-shadow-md tracking-wide">
             {mapData.beatmapset?.artist}
           </p>
           
@@ -191,26 +191,26 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
         </div>
 
         {/* Bottom: Stats Pills */}
-        <div className="grid grid-cols-5 gap-1 text-[10px] sm:text-[11px] font-mono font-bold mt-1 sm:mt-2">
-          <div className="flex flex-col items-center justify-center bg-black/60 py-1 rounded-sm">
-            <span className="text-slate-500 text-[8px] sm:text-[9px] mb-0.5">CS</span>
-            <span className="text-white">{mapData.calculatedStats?.cs}</span>
+        <div className="grid grid-cols-5 gap-1 sm:gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold mt-1 sm:mt-2">
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">CS</span>
+            <span className="text-white drop-shadow-md">{mapData.calculatedStats?.cs}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/60 py-1 rounded-sm">
-            <span className="text-slate-500 text-[8px] sm:text-[9px] mb-0.5">AR</span>
-            <span className="text-white">{mapData.calculatedStats?.ar}</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">AR</span>
+            <span className="text-white drop-shadow-md">{mapData.calculatedStats?.ar}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/60 py-1 rounded-sm">
-            <span className="text-slate-500 text-[8px] sm:text-[9px] mb-0.5">OD</span>
-            <span className="text-white">{mapData.calculatedStats?.od}</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">OD</span>
+            <span className="text-white drop-shadow-md">{mapData.calculatedStats?.od}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/60 py-1 rounded-sm">
-            <span className="text-pink-500/70 text-[8px] sm:text-[9px] mb-0.5">BPM</span>
-            <span className="text-pink-200">{mapData.calculatedStats?.bpm}</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-pink-500/70 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">BPM</span>
+            <span className="text-pink-100 drop-shadow-[0_0_5px_rgba(236,72,153,0.5)]">{mapData.calculatedStats?.bpm}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/60 py-1 rounded-sm">
-            <span className="text-sky-500/70 text-[8px] sm:text-[9px] mb-0.5">LEN</span>
-            <span className="text-sky-200">
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-blue-500/70 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">LEN</span>
+            <span className="text-blue-100 drop-shadow-[0_0_5px_rgba(59,130,246,0.5)]">
               {Math.floor((mapData.total_length || 0) / 60)}:{String((mapData.total_length || 0) % 60).padStart(2, '0')}
             </span>
           </div>
