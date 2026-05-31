@@ -159,8 +159,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Cache the entire finished mappool array on Vercel Edge for 24 hours
-    res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');
+    // Cache the finished mappool array on Vercel Edge for just 1 minute so new spreadsheet data appears quickly
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
     return res.status(200).json(finalResult);
 
   } catch (err: any) {
