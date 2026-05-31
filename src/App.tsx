@@ -166,24 +166,22 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#111115] text-white font-sans selection:bg-pink-500/30 overflow-x-hidden">
-      {/* Authentic osu! style background */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjAzKSIvPjwvc3ZnPg==')] opacity-50" />
-        
-        {/* Large faint circles in background mimicking osu! circles */}
-        <div className="absolute top-[-10%] left-[-5%] w-[800px] h-[800px] rounded-full border border-white/5 opacity-20 transform -rotate-12" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full border-[20px] border-pink-500/5 opacity-20" />
+      {/* Authentic osu! style background - solid dark slate with subtle triangles or clean circles */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#1a1a24]">
+        {/* Large clean osu! circles in background */}
+        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full border-[30px] border-white/5 opacity-40" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full border-[15px] border-[#ff66aa]/10 opacity-30" />
       </div>
 
       {/* Sleek Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#111115]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#ff66aa] border-2 border-white/20 flex items-center justify-center font-black text-lg sm:text-xl shadow-[0_0_15px_rgba(255,102,170,0.3)] text-white">
-              O!
+            {/* Authentic osu! Cookie Logo */}
+            <div className="w-10 h-10 rounded-full bg-[#ff66aa] flex items-center justify-center border-[3px] border-white shadow-[0_0_10px_rgba(255,102,170,0.6)]">
+              <span className="font-black text-xl text-white italic tracking-tighter pr-0.5 mt-0.5">osu!</span>
             </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight hidden md:block text-slate-100">Practice Hub</h1>
+            <h1 className="text-xl font-bold tracking-tight hidden md:block text-slate-100">Practice Hub</h1>
           </div>
 
           <div className="flex items-center w-full max-w-xs sm:max-w-md ml-4 sm:ml-0">
@@ -376,7 +374,11 @@ function App() {
                       disabled={currentPage === 1}
                       onClick={() => {
                         setCurrentPage(p => Math.max(1, p - 1));
-                        document.getElementById('map-grid')?.scrollIntoView({ behavior: 'smooth' });
+                        const element = document.getElementById('map-grid');
+                        if (element) {
+                          const y = element.getBoundingClientRect().top + window.pageYOffset - 120;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
                       }}
                       className="px-6 py-2 sm:py-2.5 rounded-full bg-[#1a1a20] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all border border-white/10 shadow-lg font-semibold text-sm sm:text-base"
                     >
@@ -391,7 +393,11 @@ function App() {
                       disabled={currentPage === Math.ceil(filteredMaps.length / pageSize)}
                       onClick={() => {
                         setCurrentPage(p => Math.min(Math.ceil(filteredMaps.length / pageSize), p + 1));
-                        document.getElementById('map-grid')?.scrollIntoView({ behavior: 'smooth' });
+                        const element = document.getElementById('map-grid');
+                        if (element) {
+                          const y = element.getBoundingClientRect().top + window.pageYOffset - 120;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
                       }}
                       className="px-6 py-2 sm:py-2.5 rounded-full bg-[#1a1a20] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all border border-white/10 shadow-lg font-semibold text-sm sm:text-base"
                     >
