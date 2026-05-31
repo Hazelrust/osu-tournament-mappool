@@ -408,7 +408,7 @@ function App() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/5 bg-[#050508]/80 backdrop-blur-md py-8 text-center">
         <p className="text-slate-500 text-sm font-medium">
-          osu! Practice Mappool Hub &copy; {new Date().getFullYear()} by <span className="text-pink-400 font-bold hover:text-pink-300 cursor-default transition-colors">Hazelrust</span>. All Rights Reserved.
+          osu! Practice Mappool Hub &copy; {new Date().getFullYear()} by <a href="https://osu.ppy.sh/users/11792646" target="_blank" rel="noopener noreferrer" className="text-pink-400 font-bold hover:text-pink-300 hover:underline transition-colors">Hazelrust</a>. All Rights Reserved.
         </p>
       </footer>
     </div>
