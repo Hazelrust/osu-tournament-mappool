@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Search, Filter, Plus } from 'lucide-react';
+import { Loader2, Search, Filter } from 'lucide-react';
 import MapCard from './components/MapCard';
-import ImporterModal from './components/ImporterModal';
-
-
-
 function App() {
   const [maps, setMaps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +9,6 @@ function App() {
   const [activeMainTourney, setActiveMainTourney] = useState('ALL');
   const [activeSubTourney, setActiveSubTourney] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(50);
 
   // Reset pagination when filters change
@@ -107,8 +102,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white font-sans selection:bg-pink-500/30">
-      <ImporterModal isOpen={isImporterOpen} onClose={() => setIsImporterOpen(false)} />
-      
       {/* Abstract Background Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-pink-600/20 blur-[120px]" />
@@ -126,12 +119,6 @@ function App() {
           </div>
 
           <div className="flex items-center gap-4 w-full sm:w-auto">
-            <button 
-              onClick={() => setIsImporterOpen(true)}
-              className="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-full font-bold text-sm transition-colors shadow-[0_0_15px_rgba(236,72,153,0.3)] hidden sm:flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Import Pool
-            </button>
             <div className="relative w-full max-w-md ml-4 sm:ml-0">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400" />
