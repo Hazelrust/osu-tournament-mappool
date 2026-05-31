@@ -91,14 +91,8 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
                 {archetype}
               </span>
             )}
-          </div>
-          
-          <div className="flex flex-col items-end gap-1.5">
-            <span className="font-bold text-yellow-400 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded border border-yellow-500/20 shadow-sm flex items-center gap-1">
-              {Number(mapData.difficulty_rating).toFixed(2)}<span className="text-sm">★</span>
-            </span>
             {mapData.tournament && (
-              <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md ${
+              <span className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-md ${
                 mapData.tournament === 'Personal' 
                   ? 'bg-blue-900/60 text-blue-200 border border-blue-500/30'
                   : 'bg-orange-900/60 text-orange-200 border border-orange-500/30'
@@ -106,6 +100,12 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
                 {mapData.tournament}
               </span>
             )}
+          </div>
+          
+          <div className="flex flex-col items-end gap-1.5">
+            <span className="font-bold text-yellow-400 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded border border-yellow-500/20 shadow-sm flex items-center gap-1">
+              {Number(mapData.difficulty_rating).toFixed(2)}<span className="text-sm">★</span>
+            </span>
           </div>
         </div>
         
@@ -135,9 +135,6 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
           </div>
           <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
             <span className="text-slate-500">OD</span><span className="text-white">{mapData.calculatedStats?.od}</span>
-          </div>
-          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
-            <span className="text-slate-500">HP</span><span className="text-white">{mapData.calculatedStats?.hp}</span>
           </div>
           <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50 ml-auto">
             <span className="text-slate-500">BPM</span><span className="text-pink-300">{mapData.calculatedStats?.bpm}</span>
