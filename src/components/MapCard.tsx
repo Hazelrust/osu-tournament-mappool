@@ -1,24 +1,33 @@
-
-
 export interface MapData {
+  id?: string;
+  url?: string;
+  version?: string;
+  difficulty_rating?: number;
   beatmapset?: {
-    covers?: {
-      cover?: string;
-    };
     title?: string;
     artist?: string;
     creator?: string;
+    covers?: {
+      cover?: string;
+    }
   };
-  difficulty_rating?: number;
-  version?: string;
   calculatedStats?: {
-    cs?: number | string;
-    ar?: number | string;
-    od?: number | string;
-    hp?: number | string;
-    bpm?: number | string;
-  };
-  url?: string;
+    cs?: number;
+    ar?: number;
+    od?: number;
+    hp?: number;
+    bpm?: number;
+  }
+}
+
+function getModColor(modSlot: string) {
+  const mod = modSlot.toUpperCase();
+  if (mod.startsWith('NM')) return 'bg-sky-500/90 text-white';
+  if (mod.startsWith('HR')) return 'bg-red-600/90 text-white';
+  if (mod.startsWith('HD')) return 'bg-yellow-500/90 text-slate-900';
+  if (mod.startsWith('DT')) return 'bg-purple-600/90 text-white';
+  if (mod.startsWith('EZ')) return 'bg-green-600/90 text-white';
+  return 'bg-slate-600/90 text-white';
 }
 
 export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlot: string }) {
@@ -33,7 +42,7 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
       />
       <div className="relative p-4 flex flex-col h-full bg-gradient-to-t from-slate-950/90 to-transparent">
         <div className="flex justify-between items-start mb-12">
-          <span className="font-bold text-xl px-3 py-1 bg-pink-600/90 rounded-md text-white shadow-sm">
+          <span className={`font-bold text-xl px-3 py-1 rounded-md shadow-sm ${getModColor(modSlot)}`}>
             {modSlot}
           </span>
           <span className="font-semibold text-yellow-400 bg-black/50 px-2 rounded">
