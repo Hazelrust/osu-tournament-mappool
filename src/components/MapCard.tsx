@@ -21,6 +21,30 @@ export interface MapData {
   tournament?: string;
 }
 
+const ARCHETYPE_MAP: Record<string, string> = {
+  NM1: "Aim Consistency",
+  NM2: "Streams",
+  NM3: "Alternating",
+  NM4: "Tech",
+  NM5: "Speed",
+  NM6: "Miscellaneous",
+  HD1: "Reading Consistency",
+  HD2: "Low AR Reading",
+  HD3: "Miscellaneous",
+  HR1: "Aim Consistency",
+  HR2: "Precision Aim",
+  HR3: "Miscellaneous",
+  DT1: "Aim Consistency",
+  DT2: "Stamina Speed",
+  DT3: "Fast Speed",
+  DT4: "Miscellaneous",
+  FM1: "Aim Focused",
+  FM2: "Antimod",
+  FM3: "Miscellaneous",
+  TB: "Balanced Marathon",
+  TB1: "Balanced Marathon"
+};
+
 function getModColor(modSlot: string) {
   const mod = modSlot.toUpperCase();
   if (mod.startsWith('NM')) return 'bg-sky-500/90 text-white';
@@ -34,6 +58,7 @@ function getModColor(modSlot: string) {
 export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlot: string }) {
   if (!mapData) return null;
   const bgUrl = mapData.beatmapset?.covers?.cover || '';
+  const archetype = ARCHETYPE_MAP[modSlot.toUpperCase().trim()];
   
   return (
     <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-700 bg-slate-900 group transition-transform hover:-translate-y-1">
@@ -44,9 +69,16 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
       <div className="relative p-4 flex flex-col h-full bg-gradient-to-t from-slate-950/90 to-transparent">
         <div className="flex justify-between items-start mb-12 mt-2">
           <div className="flex flex-col gap-2 items-start">
-            <span className={`font-bold text-xl px-3 py-1 rounded-md shadow-sm ${getModColor(modSlot)}`}>
-              {modSlot}
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className={`font-bold text-xl px-3 py-1 rounded-md shadow-sm w-fit ${getModColor(modSlot)}`}>
+                {modSlot}
+              </span>
+              {archetype && (
+                <span className="text-[11px] font-bold tracking-wide uppercase text-slate-300 bg-black/60 px-2 py-0.5 rounded shadow-sm border border-white/5 w-fit">
+                  {archetype}
+                </span>
+              )}
+            </div>
             {mapData.tournament && (
               <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded shadow-md backdrop-blur-md ${
                 mapData.tournament === 'Personal' 
