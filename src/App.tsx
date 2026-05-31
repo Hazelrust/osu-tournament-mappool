@@ -1,39 +1,16 @@
 import { useEffect, useState } from 'react';
 import Papa from 'papaparse';
 import { Loader2, Search, Filter, Plus } from 'lucide-react';
+import pLimit from 'p-limit';
 import MapCard from './components/MapCard';
 import ImporterModal from './components/ImporterModal';
 import { calculateMods, extractBeatmapId } from './lib/osuUtils';
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?output=csv';
+const SHEET1_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?output=csv';
+const SHEET2_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?gid=1413426737&single=true&output=csv';
 
-let cachedToken = '';
-let tokenExpiresAt = 0;
-
-async function getOsuToken() {
-  if (cachedToken && Date.now() < tokenExpiresAt) {
-    return cachedToken;
-  }
-  
-  const res = await fetch('/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: import.meta.env.VITE_OSU_CLIENT_ID,
-      client_secret: import.meta.env.VITE_OSU_CLIENT_SECRET,
-      grant_type: 'client_credentials',
-      scope: 'public'
-    })
-  });
-  
-  const data = await res.json();
-  if (data.access_token) {
-    cachedToken = data.access_token;
-    tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
-    return cachedToken;
-  }
-  throw new Error("Failed to get token");
-}
+// Removed local osu! authentication logic.
+// The Vercel backend now handles authentication securely.
 
 function parseOsuMods(modStr: string): string[] {
   const normalized = modStr.toUpperCase().replace(/[0-9]/g, '');
@@ -52,92 +29,125 @@ function App() {
   const [maps, setMaps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [activeModFilter, setActiveModFilter] = useState('ALL');
+  const [activeMainTourney, setActiveMainTourney] = useState('ALL');
+  const [activeSubTourney, setActiveSubTourney] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isImporterOpen, setIsImporterOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(50);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(50);
+  }, [activeModFilter, activeMainTourney, activeSubTourney, searchQuery]);
 
   useEffect(() => {
     const fetchMappool = async () => {
       try {
-        const token = await getOsuToken();
-        // Add a random timestamp to completely bypass Google Sheets' aggressive 5-minute caching
-        const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
-        const text = await response.text();
+        // Use the new serverless backend that handles auth automatically
+        const response1 = await fetch(`${SHEET1_URL}&t=${Date.now()}`);
+        const text1 = await response1.text();
         
-        Papa.parse(text, {
-          header: true,
-          complete: async (results) => {
-            const fetchPromises = (results.data as any[]).map(async (row) => {
-              const modSlot = row['Mod'];
-              const mapUrl = row['Map URL'];
-              
-              if (!modSlot || !mapUrl) return null;
-
-              const beatmapId = extractBeatmapId(mapUrl);
-              if (!beatmapId) return null;
-
-              const cacheKey = `osu_map_${beatmapId}_${modSlot}`;
-              const cachedData = localStorage.getItem(cacheKey);
-              if (cachedData) {
-                return JSON.parse(cachedData);
-              }
-
-              try {
-                const apiRes = await fetch(`/api/v2/beatmaps/${beatmapId}`, {
-                  headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!apiRes.ok) return null;
-                
-                const mapData = await apiRes.json();
-                
-                const modArray = parseOsuMods(modSlot);
-                
-                const attrRes = await fetch(`/api/v2/beatmaps/${beatmapId}/attributes`, {
-                  method: 'POST',
-                  headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    mods: modArray,
-                    ruleset: 'osu'
-                  })
-                });
-
-                if (attrRes.ok) {
-                   const attrData = await attrRes.json();
-                   if (attrData.attributes?.star_rating) {
-                     mapData.difficulty_rating = attrData.attributes.star_rating;
-                   }
-                }
-                
-                const calculatedStats = calculateMods({
-                  cs: mapData.cs,
-                  ar: mapData.ar,
-                  accuracy: mapData.accuracy,
-                  drain: mapData.drain,
-                  bpm: mapData.bpm
-                }, modSlot);
-
-                const finalMapObj = {
-                  ...mapData,
-                  calculatedStats,
-                  modSlot
-                };
-                
-                localStorage.setItem(cacheKey, JSON.stringify(finalMapObj));
-                return finalMapObj;
-              } catch (err) {
-                console.error("Failed to fetch map", beatmapId, err);
-                return null;
+        const response2 = await fetch(`${SHEET2_URL}&t=${Date.now()}`);
+        const text2 = await response2.text();
+        
+        const parseCSV = (text: string, defaultTourney: string) => {
+          return new Promise<any[]>((resolve) => {
+            Papa.parse(text, {
+              header: true,
+              complete: (results) => {
+                const mapped = (results.data as any[]).map(row => ({
+                  ...row,
+                  Tournament: row.Tournament || defaultTourney
+                }));
+                resolve(mapped);
               }
             });
+          });
+        };
 
-            const resolvedMaps = await Promise.all(fetchPromises);
-            setMaps(resolvedMaps.filter(map => map !== null));
-            setLoading(false);
+        const [data1, data2] = await Promise.all([
+          parseCSV(text1, 'Personal'),
+          parseCSV(text2, 'OWC Unknown')
+        ]);
+        
+        const combinedData = [...data1, ...data2];
+        const limit = pLimit(5); // Only 5 concurrent requests to avoid rate limits
+
+        const fetchPromises = combinedData.map((row) => limit(async () => {
+          const modSlot = row['Mod'];
+          const mapUrl = row['Map URL'];
+          const tournament = row['Tournament'];
+          
+          if (!modSlot || !mapUrl) return null;
+
+          const beatmapId = extractBeatmapId(mapUrl);
+          if (!beatmapId) return null;
+
+          const cacheKey = `osu_map_${beatmapId}_${modSlot}`;
+          const cachedData = localStorage.getItem(cacheKey);
+          if (cachedData) {
+            const parsed = JSON.parse(cachedData);
+            if (parsed.error) return null; // Skip known failures
+            
+            // Ensure tournament info is updated in cache just in case it changed
+            parsed.tournament = tournament;
+            return parsed;
           }
-        });
+
+          // Intentional delay to prevent rate limiting
+          await new Promise(r => setTimeout(r, 200));
+
+          try {
+            // Use the Vercel backend which caches responses
+            const apiRes = await fetch(`/api/beatmap?id=${beatmapId}`);
+            
+            if (!apiRes.ok) {
+               // Cache the failure so we don't spam it next time
+               localStorage.setItem(cacheKey, JSON.stringify({ error: true }));
+               return null;
+            }
+            
+            const mapData = await apiRes.json();
+            const modArray = parseOsuMods(modSlot);
+            
+            // Use the Vercel attributes backend which translates our GET request into an osu POST request for caching
+            const modsQuery = modArray.join(',');
+            const attrRes = await fetch(`/api/attributes?id=${beatmapId}&mods=${modsQuery}`);
+
+            if (attrRes.ok) {
+               const attrData = await attrRes.json();
+               if (attrData.attributes?.star_rating) {
+                 mapData.difficulty_rating = attrData.attributes.star_rating;
+               }
+            }
+            
+            const calculatedStats = calculateMods({
+              cs: mapData.cs,
+              ar: mapData.ar,
+              accuracy: mapData.accuracy,
+              drain: mapData.drain,
+              bpm: mapData.bpm
+            }, modSlot);
+
+            const finalMapObj = {
+              ...mapData,
+              calculatedStats,
+              modSlot,
+              tournament
+            };
+            
+            localStorage.setItem(cacheKey, JSON.stringify(finalMapObj));
+            return finalMapObj;
+          } catch (err) {
+            console.error("Failed to fetch map", beatmapId, err);
+            return null;
+          }
+        }));
+
+        const resolvedMaps = await Promise.all(fetchPromises);
+        setMaps(resolvedMaps.filter(map => map !== null));
+        setLoading(false);
       } catch (err: any) {
         console.error("Failed to fetch data", err);
         setError(err.message || "Failed to load maps");
@@ -148,14 +158,55 @@ function App() {
     fetchMappool();
   }, []);
 
-  // Compute unique mod categories (NM, HD, HR, DT, FM, TB, etc)
-  const modCategories = ['ALL', ...Array.from(new Set(maps.map(m => m.modSlot.replace(/[0-9]/g, ''))))];
+  // Compute unique categories
+  const modCategories = ['ALL', ...Array.from(new Set(maps.map(m => m.modSlot.replace(/[0-9]/g, ''))))].sort();
+  
+  // Group tournaments
+  const getTourneyGroup = (name: string) => {
+    if (!name) return 'Unknown';
+    if (name === 'Personal') return 'Personal';
+    const owcMatch = name.match(/OWC \d{4}/);
+    if (owcMatch) return owcMatch[0];
+    return name.split(' ')[0]; // Fallback for other things
+  };
+
+  const getTourneySub = (name: string, group: string) => {
+    if (name === group) return name;
+    return name.replace(group, '').trim();
+  };
+
+  const mainTourneys = ['ALL', ...Array.from(new Set(maps.map(m => getTourneyGroup(m.tournament))))].sort();
+  
+  const availableSubTourneys = ['ALL', ...Array.from(new Set(
+    maps
+      .filter(m => activeMainTourney === 'ALL' || getTourneyGroup(m.tournament) === activeMainTourney)
+      .map(m => getTourneySub(m.tournament, getTourneyGroup(m.tournament)))
+      .filter(sub => sub && sub.trim() !== '')
+  ))];
+
+  // Specific sorting for OWC rounds if present
+  const owcOrder = ["Qualifiers", "Round of 32", "Round of 16", "Quarterfinals", "Semifinals", "Finals", "Grand Finals"];
+  availableSubTourneys.sort((a, b) => {
+    if (a === 'ALL') return -1;
+    if (b === 'ALL') return 1;
+    const idxA = owcOrder.indexOf(a);
+    const idxB = owcOrder.indexOf(b);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    return a.localeCompare(b);
+  });
 
   const filteredMaps = maps.filter(map => {
-    const matchesFilter = activeFilter === 'ALL' || map.modSlot.startsWith(activeFilter);
+    const matchesMod = activeModFilter === 'ALL' || map.modSlot.startsWith(activeModFilter);
+    const group = getTourneyGroup(map.tournament);
+    const sub = getTourneySub(map.tournament, group);
+    
+    const matchesMainTourney = activeMainTourney === 'ALL' || group === activeMainTourney;
+    const matchesSubTourney = activeSubTourney === 'ALL' || sub === activeSubTourney;
+    
     const matchesSearch = map.beatmapset?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           map.beatmapset?.artist?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
+                          
+    return matchesMod && matchesMainTourney && matchesSubTourney && matchesSearch;
   });
 
   return (
@@ -232,25 +283,79 @@ function App() {
           </div>
         ) : (
           <>
-            {/* Filter Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-              <div className="flex items-center gap-2 mr-2 text-slate-400">
-                <Filter className="w-4 h-4" />
-                <span className="text-sm font-semibold uppercase tracking-wider">Filter Mods</span>
+            {/* Filters */}
+            <div className="flex flex-col gap-6 mb-12 bg-slate-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+              
+              {/* Main Tournament Filter */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[120px]">
+                  <Filter className="w-4 h-4" />
+                  <span className="text-sm font-semibold uppercase tracking-wider">Tournament</span>
+                </div>
+                {mainTourneys.map((tourney) => (
+                  <button
+                    key={tourney}
+                    onClick={() => {
+                      setActiveMainTourney(tourney);
+                      setActiveSubTourney('ALL'); // Reset sub filter
+                    }}
+                    className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
+                      activeMainTourney === tourney 
+                        ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]'
+                        : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {tourney}
+                  </button>
+                ))}
               </div>
-              {modCategories.map((mod) => (
-                <button
-                  key={mod}
-                  onClick={() => setActiveFilter(mod)}
-                  className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
-                    activeFilter === mod 
-                      ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105'
-                      : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {mod}
-                </button>
-              ))}
+
+              {/* Sub Tournament Filter (Only show if there are sub options besides ALL) */}
+              {availableSubTourneys.length > 1 && (
+                <>
+                  <div className="w-full h-px bg-white/5" />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[120px]">
+                      <span className="text-sm font-semibold uppercase tracking-wider pl-6">Stage</span>
+                    </div>
+                    {availableSubTourneys.map((sub) => (
+                      <button
+                        key={sub}
+                        onClick={() => setActiveSubTourney(sub)}
+                        className={`px-3 py-1 rounded-md text-xs font-bold transition-all duration-300 ${
+                          activeSubTourney === sub 
+                            ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
+                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div className="w-full h-px bg-white/5" />
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[120px]">
+                  <Filter className="w-4 h-4" />
+                  <span className="text-sm font-semibold uppercase tracking-wider">Mod Slot</span>
+                </div>
+                {modCategories.map((mod) => (
+                  <button
+                    key={mod}
+                    onClick={() => setActiveModFilter(mod)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
+                      activeModFilter === mod 
+                        ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                        : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {mod}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Grid */}
@@ -259,11 +364,24 @@ function App() {
                 <p className="text-xl">No maps found matching your criteria.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-                {filteredMaps.map((map) => (
-                  <MapCard key={`${map.modSlot}-${map.id}`} mapData={map} modSlot={map.modSlot} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+                  {filteredMaps.slice(0, visibleCount).map((map, idx) => (
+                    <MapCard key={`${map.modSlot}-${map.id}-${idx}`} mapData={map} modSlot={map.modSlot} />
+                  ))}
+                </div>
+                
+                {visibleCount < filteredMaps.length && (
+                  <div className="flex justify-center mt-12">
+                    <button 
+                      onClick={() => setVisibleCount(prev => prev + 50)}
+                      className="px-8 py-3 bg-pink-600 hover:bg-pink-500 text-white rounded-full font-bold transition-all shadow-[0_0_15px_rgba(236,72,153,0.3)] hover:shadow-[0_0_25px_rgba(236,72,153,0.5)]"
+                    >
+                      Load More Maps ({filteredMaps.length - visibleCount} remaining)
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

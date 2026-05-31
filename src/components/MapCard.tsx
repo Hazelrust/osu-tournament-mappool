@@ -17,7 +17,8 @@ export interface MapData {
     od?: number;
     hp?: number;
     bpm?: number;
-  }
+  };
+  tournament?: string;
 }
 
 function getModColor(modSlot: string) {
@@ -41,11 +42,22 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
         style={{ backgroundImage: `url(${bgUrl})` }}
       />
       <div className="relative p-4 flex flex-col h-full bg-gradient-to-t from-slate-950/90 to-transparent">
-        <div className="flex justify-between items-start mb-12">
-          <span className={`font-bold text-xl px-3 py-1 rounded-md shadow-sm ${getModColor(modSlot)}`}>
-            {modSlot}
-          </span>
-          <span className="font-semibold text-yellow-400 bg-black/50 px-2 rounded">
+        <div className="flex justify-between items-start mb-12 mt-2">
+          <div className="flex flex-col gap-2 items-start">
+            <span className={`font-bold text-xl px-3 py-1 rounded-md shadow-sm ${getModColor(modSlot)}`}>
+              {modSlot}
+            </span>
+            {mapData.tournament && (
+              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded shadow-md backdrop-blur-md ${
+                mapData.tournament === 'Personal' 
+                  ? 'bg-blue-600/80 text-white border border-blue-400/30'
+                  : 'bg-orange-500/80 text-white border border-orange-300/30'
+              }`}>
+                {mapData.tournament}
+              </span>
+            )}
+          </div>
+          <span className="font-semibold text-yellow-400 bg-black/50 px-2 rounded mt-1">
             {Number(mapData.difficulty_rating).toFixed(2)}★
           </span>
         </div>

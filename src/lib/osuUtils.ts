@@ -35,7 +35,7 @@ export function calculateMods(baseStats: BaseStats, modStr: string) {
 }
 
 export function extractBeatmapId(url: string) {
-  // Matches ...#osu/12345 or /beatmaps/12345
-  const match = url.match(/(?:#osu\/|beatmaps\/)(\d+)/);
+  // Matches ...#osu/12345, /beatmaps/12345, or /b/12345
+  const match = url.match(/(?:#osu\/|beatmaps\/|b\/)(\d+)/);
   return match ? match[1] : null;
 }
