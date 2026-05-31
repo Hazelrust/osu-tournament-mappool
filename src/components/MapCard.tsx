@@ -48,7 +48,7 @@ const ARCHETYPE_MAP: Record<string, string> = {
 };
 
 function getModColor(modSlot: string) {
-  const mod = modSlot.toUpperCase();
+  const mod = (modSlot || '').toUpperCase();
   if (mod.startsWith('NM')) return 'bg-sky-500/90 text-white';
   if (mod.startsWith('HR')) return 'bg-red-600/90 text-white';
   if (mod.startsWith('HD')) return 'bg-yellow-500/90 text-slate-900';
@@ -60,7 +60,9 @@ function getModColor(modSlot: string) {
 export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlot: string }) {
   if (!mapData) return null;
   const bgUrl = mapData.beatmapset?.covers?.cover || '';
-  const archetype = ARCHETYPE_MAP[modSlot.toUpperCase().trim()];
+  const safeModSlot = modSlot || '';
+  const archetype = ARCHETYPE_MAP[safeModSlot.toUpperCase().trim()];
+
   
   return (
     <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-700/50 bg-slate-900 group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-slate-500/50 flex flex-col h-full">

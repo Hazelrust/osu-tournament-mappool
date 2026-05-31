@@ -41,7 +41,7 @@ function App() {
     fetchMappool();
   }, []);
 
-  const modCategories = ['ALL', ...Array.from(new Set(maps.map(m => m.modSlot.replace(/[0-9]/g, ''))))].sort();
+  const modCategories = ['ALL', ...Array.from(new Set(maps.map(m => (m.modSlot || '').replace(/[0-9]/g, ''))))].filter(Boolean).sort();
   
   const getTourneyGroup = (name: string) => {
     if (!name) return 'Unknown';
@@ -53,7 +53,7 @@ function App() {
 
   const getTourneySub = (name: string, group: string) => {
     if (name === group) return name;
-    return name.replace(group, '').trim();
+    return (name || '').replace(group, '').trim();
   };
 
   const mainTourneys = ['ALL', ...Array.from(new Set(maps.map(m => getTourneyGroup(m.tournament))))].sort();
@@ -77,7 +77,7 @@ function App() {
   });
 
   const filteredMaps = maps.filter(map => {
-    const matchesMod = activeModFilter === 'ALL' || map.modSlot.startsWith(activeModFilter);
+    const matchesMod = activeModFilter === 'ALL' || (map.modSlot || '').startsWith(activeModFilter);
     const group = getTourneyGroup(map.tournament);
     const sub = getTourneySub(map.tournament, group);
     const matchesMainTourney = activeMainTourney === 'ALL' || group === activeMainTourney;
@@ -110,7 +110,7 @@ function App() {
     if (idxA === -1 && idxB !== -1) return 1;
     
     // Fallback to alphabetical if same stage or no stage
-    return a.modSlot.localeCompare(b.modSlot);
+    return (a.modSlot || '').localeCompare(b.modSlot || '');
   });
 
   return (
