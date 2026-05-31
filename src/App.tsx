@@ -9,8 +9,11 @@ import { calculateMods, extractBeatmapId } from './lib/osuUtils';
 const SHEET1_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?output=csv';
 const SHEET2_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?gid=1413426737&single=true&output=csv';
 
-// Removed local osu! authentication logic.
 // The Vercel backend now handles authentication securely.
+
+// Hardcoded list of maps that are permanently deleted from osu! servers
+// We block these to prevent annoying 404 errors in the console.
+const DELETED_MAP_IDS = ["4376789", "4384670", "4393055"];
 
 function parseOsuMods(modStr: string): string[] {
   const normalized = modStr.toUpperCase().replace(/[0-9]/g, '');
@@ -74,77 +77,112 @@ function App() {
         const combinedData = [...data1, ...data2];
         const limit = pLimit(20); // Only 20 concurrent requests to avoid rate limits
 
+        // We will flush the fetched maps to the UI in batches so the user doesn't have to wait for all 240
+        let currentBatch: any[] = [];
+        let batchTimer: any = null;
+
+        const flushBatch = () => {
+          if (currentBatch.length > 0) {
+            setMaps(prev => {
+              // prevent duplicates just in case
+              const newMaps = currentBatch.filter(newMap => !prev.some(p => p.id === newMap.id && p.modSlot === newMap.modSlot));
+              return [...prev, ...newMaps];
+            });
+            currentBatch = [];
+          }
+        };
+
+        // Instantly hide the full-page loader! Maps will stream in smoothly.
+        setLoading(false);
+
         const fetchPromises = combinedData.map((row) => limit(async () => {
           const modSlot = row['Mod'];
           const mapUrl = row['Map URL'];
           const tournament = row['Tournament'];
-          
-          if (!modSlot || !mapUrl) return null;
 
-          const beatmapId = extractBeatmapId(mapUrl);
-          if (!beatmapId) return null;
+          let beatmapId = null;
+          if (mapUrl && typeof mapUrl === 'string') {
+            beatmapId = extractBeatmapId(mapUrl);
+          }
+
+          if (!beatmapId || DELETED_MAP_IDS.includes(beatmapId)) return null;
 
           const cacheKey = `osu_map_${beatmapId}_${modSlot}`;
           const cachedData = localStorage.getItem(cacheKey);
+          
+          let finalMapObj = null;
+
           if (cachedData) {
             const parsed = JSON.parse(cachedData);
             if (parsed.error) return null; // Skip known failures
             
             // Ensure tournament info is updated in cache just in case it changed
             parsed.tournament = tournament;
-            return parsed;
+            finalMapObj = parsed;
+          } else {
+            try {
+              // Use the Vercel backend which caches responses
+              const apiRes = await fetch(`/api/beatmap?id=${beatmapId}`);
+              
+              if (!apiRes.ok) {
+                 // Cache the failure so we don't spam it next time
+                 localStorage.setItem(cacheKey, JSON.stringify({ error: true }));
+                 return null;
+              }
+              
+              const mapData = await apiRes.json();
+              const modArray = parseOsuMods(modSlot);
+              
+              // Use the Vercel attributes backend which translates our GET request into an osu POST request for caching
+              const modsQuery = modArray.join(',');
+              const attrRes = await fetch(`/api/attributes?id=${beatmapId}&mods=${modsQuery}`);
+
+              if (attrRes.ok) {
+                 const attrData = await attrRes.json();
+                 if (attrData.attributes?.star_rating) {
+                   mapData.difficulty_rating = attrData.attributes.star_rating;
+                 }
+              }
+
+              const calculatedStats = calculateMods({
+                cs: mapData.cs,
+                ar: mapData.ar,
+                accuracy: mapData.accuracy,
+                drain: mapData.drain,
+                bpm: mapData.bpm
+              }, modSlot);
+
+              finalMapObj = {
+                ...mapData,
+                calculatedStats,
+                modSlot,
+                tournament
+              };
+              
+              localStorage.setItem(cacheKey, JSON.stringify(finalMapObj));
+            } catch (err) {
+              console.error("Failed to fetch map", beatmapId, err);
+              return null;
+            }
           }
 
-          try {
-            // Use the Vercel backend which caches responses
-            const apiRes = await fetch(`/api/beatmap?id=${beatmapId}`);
-            
-            if (!apiRes.ok) {
-               // Cache the failure so we don't spam it next time
-               localStorage.setItem(cacheKey, JSON.stringify({ error: true }));
-               return null;
+          if (finalMapObj) {
+            currentBatch.push(finalMapObj);
+            if (!batchTimer) {
+              batchTimer = setTimeout(() => {
+                flushBatch();
+                batchTimer = null;
+              }, 300); // Flush UI updates every 300ms
             }
-            
-            const mapData = await apiRes.json();
-            const modArray = parseOsuMods(modSlot);
-            
-            // Use the Vercel attributes backend which translates our GET request into an osu POST request for caching
-            const modsQuery = modArray.join(',');
-            const attrRes = await fetch(`/api/attributes?id=${beatmapId}&mods=${modsQuery}`);
-
-            if (attrRes.ok) {
-               const attrData = await attrRes.json();
-               if (attrData.attributes?.star_rating) {
-                 mapData.difficulty_rating = attrData.attributes.star_rating;
-               }
-            }
-            
-            const calculatedStats = calculateMods({
-              cs: mapData.cs,
-              ar: mapData.ar,
-              accuracy: mapData.accuracy,
-              drain: mapData.drain,
-              bpm: mapData.bpm
-            }, modSlot);
-
-            const finalMapObj = {
-              ...mapData,
-              calculatedStats,
-              modSlot,
-              tournament
-            };
-            
-            localStorage.setItem(cacheKey, JSON.stringify(finalMapObj));
-            return finalMapObj;
-          } catch (err) {
-            console.error("Failed to fetch map", beatmapId, err);
-            return null;
           }
+          return finalMapObj;
         }));
 
-        const resolvedMaps = await Promise.all(fetchPromises);
-        setMaps(resolvedMaps.filter(map => map !== null));
-        setLoading(false);
+        // Final flush when absolutely everything is done
+        Promise.all(fetchPromises).then(() => {
+          if (batchTimer) clearTimeout(batchTimer);
+          flushBatch();
+        });
       } catch (err: any) {
         console.error("Failed to fetch data", err);
         setError(err.message || "Failed to load maps");
