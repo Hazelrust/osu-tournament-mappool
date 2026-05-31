@@ -10,12 +10,13 @@ function App() {
   const [activeSubTourney, setActiveSubTourney] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('Default'); // Default, Stars, BPM, Length
+  const [sortDesc, setSortDesc] = useState(true);
   const [visibleCount, setVisibleCount] = useState(50);
   
   // Reset pagination when filters or sort change
   useEffect(() => {
     setVisibleCount(50);
-  }, [activeModFilter, activeMainTourney, activeSubTourney, searchQuery, sortBy]);
+  }, [activeModFilter, activeMainTourney, activeSubTourney, searchQuery, sortBy, sortDesc]);
 
   useEffect(() => {
     const fetchMappool = async () => {
@@ -89,14 +90,16 @@ function App() {
 
   // Apply sorting
   filteredMaps.sort((a, b) => {
+    const modifier = sortDesc ? 1 : -1;
+    
     if (sortBy === 'Stars') {
-      return (b.difficulty_rating || 0) - (a.difficulty_rating || 0); // Descending
+      return ((b.difficulty_rating || 0) - (a.difficulty_rating || 0)) * modifier;
     }
     if (sortBy === 'BPM') {
-      return (b.calculatedStats?.bpm || 0) - (a.calculatedStats?.bpm || 0); // Descending
+      return ((b.calculatedStats?.bpm || 0) - (a.calculatedStats?.bpm || 0)) * modifier;
     }
     if (sortBy === 'Length') {
-      return (b.total_length || 0) - (a.total_length || 0); // Descending
+      return ((b.total_length || 0) - (a.total_length || 0)) * modifier;
     }
     
     // Default Sorting (Tournament Stage Order -> Mod Slot)
@@ -105,31 +108,35 @@ function App() {
     const idxA = owcOrder.indexOf(subA);
     const idxB = owcOrder.indexOf(subB);
     
-    if (idxA !== -1 && idxB !== -1 && idxA !== idxB) return idxA - idxB;
-    if (idxA !== -1 && idxB === -1) return -1;
-    if (idxA === -1 && idxB !== -1) return 1;
+    let result = 0;
+    if (idxA !== -1 && idxB !== -1 && idxA !== idxB) result = idxA - idxB;
+    else if (idxA !== -1 && idxB === -1) result = -1;
+    else if (idxA === -1 && idxB !== -1) result = 1;
+    else result = (a.modSlot || '').localeCompare(b.modSlot || '');
     
-    // Fallback to alphabetical if same stage or no stage
-    return (a.modSlot || '').localeCompare(b.modSlot || '');
+    return result * modifier;
   });
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white font-sans selection:bg-pink-500/30 overflow-x-hidden">
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-pink-600/10 blur-[150px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full bg-indigo-600/10 blur-[150px] animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s' }} />
-        <div className="absolute top-[30%] right-[20%] w-[30%] h-[30%] rounded-full bg-purple-600/10 blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
+    <div className="min-h-screen bg-[#111115] text-white font-sans selection:bg-pink-500/30 overflow-x-hidden">
+      {/* Authentic osu! style background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjAzKSIvPjwvc3ZnPg==')] opacity-50" />
+        
+        {/* Large faint circles in background mimicking osu! circles */}
+        <div className="absolute top-[-10%] left-[-5%] w-[800px] h-[800px] rounded-full border border-white/5 opacity-20 transform -rotate-12" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full border-[20px] border-pink-500/5 opacity-20" />
       </div>
 
-      {/* Glassmorphism Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#050508]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#050508]/60">
+      {/* Sleek Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#111115]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-pink-500 to-indigo-500 flex items-center justify-center font-black text-lg sm:text-xl shadow-[0_0_20px_rgba(236,72,153,0.4)]">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#ff66aa] border-2 border-white/20 flex items-center justify-center font-black text-lg sm:text-xl shadow-[0_0_15px_rgba(255,102,170,0.3)] text-white">
               O!
             </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight hidden md:block bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Practice Hub</h1>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight hidden md:block text-slate-100">Practice Hub</h1>
           </div>
 
           <div className="flex items-center w-full max-w-xs sm:max-w-md ml-4 sm:ml-0">
@@ -142,7 +149,7 @@ function App() {
                 placeholder="Search maps..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-white/10 rounded-full leading-5 bg-white/5 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all text-sm backdrop-blur-sm"
+                className="block w-full pl-10 pr-3 py-2 border border-white/10 rounded-full leading-5 bg-[#1a1a20] text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all text-sm"
               />
             </div>
           </div>
@@ -155,12 +162,12 @@ function App() {
         <div className="text-center mb-12 sm:mb-16 mt-4 sm:mt-8 px-2">
           <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tighter mb-4 sm:mb-6">
             Master your <br className="sm:hidden" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-400">
+            <span className="text-[#ff66aa]">
               Tournament Pool
             </span>
           </h2>
           <p className="text-slate-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Live integration with Google Sheets. Beautiful beatmap cards. Perfect math. Let's start clicking circles.
+            Your team's central hub for map practice. Track, filter, and drill the hardest pools in the scene without missing a beat.
           </p>
         </div>
 
@@ -172,19 +179,16 @@ function App() {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full blur-xl bg-pink-500/30 animate-pulse" />
-              <Loader2 className="relative w-16 h-16 animate-spin text-pink-500" />
-            </div>
-            <p className="mt-6 text-lg font-medium text-slate-300 animate-pulse">Syncing with Google Sheets...</p>
+            <Loader2 className="w-12 h-12 animate-spin text-[#ff66aa]" />
+            <p className="mt-6 text-lg font-medium text-slate-400">Loading maps...</p>
           </div>
         ) : (
           <>
             {/* Filters & Sorting */}
-            <div className="flex flex-col gap-6 mb-10 sm:mb-12 bg-slate-900/50 p-4 sm:p-6 rounded-2xl border border-white/5 backdrop-blur-sm shadow-xl">
+            <div className="flex flex-col gap-6 mb-10 sm:mb-12 bg-[#1a1a20] p-4 sm:p-6 rounded-2xl border border-white/5 shadow-xl">
               
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex flex-col gap-6 w-full">
+              <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6">
+                <div className="flex flex-col gap-6 w-full xl:w-auto overflow-hidden">
                   {/* Main Tournament Filter */}
                   <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
                     <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
@@ -198,9 +202,9 @@ function App() {
                           setActiveMainTourney(tourney);
                           setActiveSubTourney('ALL'); // Reset sub filter
                         }}
-                        className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
+                        className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
                           activeMainTourney === tourney 
-                            ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]'
+                            ? 'bg-[#ff66aa] text-white shadow-[0_0_15px_rgba(255,102,170,0.4)]'
                             : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
                         }`}
                       >
@@ -221,10 +225,10 @@ function App() {
                           <button
                             key={sub}
                             onClick={() => setActiveSubTourney(sub)}
-                            className={`shrink-0 px-3 py-1.5 sm:py-1 rounded-md text-sm sm:text-xs font-bold transition-all duration-300 ${
+                            className={`shrink-0 px-3 py-1.5 sm:py-1 rounded-md text-sm sm:text-xs font-bold transition-all duration-200 ${
                               activeSubTourney === sub 
-                                ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
-                                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                                ? 'bg-white/20 text-white shadow-sm'
+                                : 'bg-transparent text-slate-400 hover:bg-white/5 hover:text-white'
                             }`}
                           >
                             {sub}
@@ -246,7 +250,7 @@ function App() {
                       <button
                         key={mod}
                         onClick={() => setActiveModFilter(mod)}
-                        className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
+                        className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
                           activeModFilter === mod 
                             ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
                             : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
@@ -258,13 +262,13 @@ function App() {
                   </div>
                 </div>
 
-                {/* Fancy Sort Toggle */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0 lg:ml-auto lg:pl-6 lg:border-l border-white/5 pt-4 lg:pt-0">
+                {/* Fancy Sort Toggle (Volume-like buttons) */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0 xl:ml-auto xl:pl-6 xl:border-l border-white/5 pt-4 xl:pt-0 w-full xl:w-auto">
                   <div className="flex items-center gap-2 text-slate-400">
                     <ArrowDownUp className="w-4 h-4" />
                     <span className="text-sm font-semibold uppercase tracking-wider">Sort By</span>
                   </div>
-                  <div className="flex bg-slate-950/50 p-1.5 rounded-xl border border-white/10 shadow-inner w-full sm:w-auto">
+                  <div className="flex bg-[#111115] p-1.5 rounded-xl border border-white/10 shadow-inner w-full sm:w-auto overflow-x-auto hide-scrollbar">
                     {[
                       { id: 'Default', label: 'Stage', icon: ListOrdered, activeColor: 'bg-white/20 text-white shadow-sm' },
                       { id: 'Stars', label: 'Stars', icon: Star, activeColor: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' },
@@ -276,15 +280,27 @@ function App() {
                       return (
                         <button
                           key={s.id}
-                          onClick={() => setSortBy(s.id)}
-                          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 ${
+                          onClick={() => {
+                            if (isActive) {
+                              setSortDesc(!sortDesc);
+                            } else {
+                              setSortBy(s.id);
+                              setSortDesc(true); // Default to Descending on new sort
+                            }
+                          }}
+                          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 ${
                             isActive 
                               ? s.activeColor
                               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
                           }`}
                         >
-                          <Icon className={`w-4 h-4 ${isActive ? '' : 'opacity-70'}`} />
-                          <span className={isActive ? '' : 'hidden sm:block'}>{s.label}</span>
+                          <div className="flex flex-col items-center gap-0.5 mr-1">
+                            {/* Volume-bar style Asc/Desc indicator */}
+                            <div className={`w-2 h-1 rounded-sm ${isActive && !sortDesc ? 'bg-current' : 'bg-current opacity-30'}`} />
+                            <div className={`w-3 h-1 rounded-sm ${isActive && sortDesc ? 'bg-current' : 'bg-current opacity-30'}`} />
+                          </div>
+                          <Icon className={`w-4 h-4 hidden sm:block ${isActive ? '' : 'opacity-70'}`} />
+                          <span>{s.label}</span>
                         </button>
                       );
                     })}

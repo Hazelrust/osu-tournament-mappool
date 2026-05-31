@@ -87,11 +87,11 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
         {/* Top Header: Mod & Difficulty */}
         <div className="flex justify-between items-start mb-6">
           <div className="flex flex-col gap-1.5 items-start">
-            <span className={`font-black text-xl px-3 py-0.5 rounded shadow-sm tracking-tight ${getModColor(modSlot)}`}>
+            <span className={`font-black text-xl px-3 py-0.5 rounded shadow-[0_0_15px_rgba(0,0,0,0.5)] tracking-tight ${getModColor(modSlot)}`}>
               {modSlot}
             </span>
             {archetype && (
-              <span className="text-[10px] font-bold tracking-widest uppercase text-slate-300 bg-black/40 px-2 py-0.5 rounded backdrop-blur-md border border-white/10 shadow-sm">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-slate-200 bg-black/60 px-2 py-0.5 rounded backdrop-blur-md border border-white/10 shadow-sm">
                 {archetype}
               </span>
             )}
@@ -107,41 +107,56 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
           </div>
           
           <div className="flex flex-col items-end gap-1.5">
-            <span className="font-bold text-yellow-400 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded border border-yellow-500/20 shadow-sm flex items-center gap-1">
-              {Number(mapData.difficulty_rating).toFixed(2)}<span className="text-sm">★</span>
-            </span>
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 backdrop-blur-md px-3 py-1 rounded-lg border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+              <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 text-lg">
+                {Number(mapData.difficulty_rating).toFixed(2)}
+              </span>
+              <span className="text-yellow-400 text-sm drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]">★</span>
+            </div>
           </div>
         </div>
         
         {/* Middle: Map Info */}
-        <div className="mt-auto pt-4 flex flex-col gap-1">
-          <h3 className="text-xl font-bold text-white leading-tight line-clamp-1 group-hover:text-pink-300 transition-colors">
+        <div className="mt-auto pt-6 flex flex-col gap-1">
+          <h3 className="text-2xl font-black text-white leading-tight line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-pink-400 group-hover:to-indigo-400 transition-all drop-shadow-md">
             {mapData.beatmapset?.title}
           </h3>
-          <p className="text-sm text-slate-400 line-clamp-1 font-medium">
+          <p className="text-sm font-semibold text-pink-300/90 line-clamp-1 drop-shadow-md tracking-wide">
             {mapData.beatmapset?.artist}
           </p>
           
-          <div className="flex justify-between items-center text-[11px] text-slate-500 mt-1 mb-3">
-            <span className="truncate flex-1 font-medium bg-white/5 px-2 py-0.5 rounded-full w-fit max-w-[80%] border border-white/5">
-              <span className="text-slate-300">{mapData.version}</span> by {mapData.beatmapset?.creator}
+          <div className="flex items-center gap-2 mt-2 mb-4">
+            <div className="h-px bg-white/10 flex-1" />
+            <span className="text-[11px] text-slate-400 font-medium bg-black/40 px-2.5 py-0.5 rounded-full border border-white/5 backdrop-blur-md whitespace-nowrap max-w-[150px] truncate">
+              <span className="text-slate-200 font-bold">{mapData.version}</span> by {mapData.beatmapset?.creator}
             </span>
+            <div className="h-px bg-white/10 flex-1" />
           </div>
         </div>
 
         {/* Bottom: Stats Pills */}
-        <div className="flex gap-1.5 text-[11px] font-mono font-semibold text-slate-300 mt-2 flex-wrap">
-          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
-            <span className="text-slate-500">CS</span><span className="text-white">{mapData.calculatedStats?.cs}</span>
+        <div className="grid grid-cols-5 gap-1.5 text-[11px] font-mono font-bold mt-2">
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">CS</span>
+            <span className="text-white drop-shadow-md">{mapData.calculatedStats?.cs}</span>
           </div>
-          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
-            <span className="text-slate-500">AR</span><span className="text-white">{mapData.calculatedStats?.ar}</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">AR</span>
+            <span className="text-white drop-shadow-md">{mapData.calculatedStats?.ar}</span>
           </div>
-          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
-            <span className="text-slate-500">OD</span><span className="text-white">{mapData.calculatedStats?.od}</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">OD</span>
+            <span className="text-white drop-shadow-md">{mapData.calculatedStats?.od}</span>
           </div>
-          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50 ml-auto">
-            <span className="text-slate-500">BPM</span><span className="text-pink-300">{mapData.calculatedStats?.bpm}</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-pink-500/70 text-[9px] uppercase tracking-widest mb-0.5">BPM</span>
+            <span className="text-pink-100 drop-shadow-[0_0_5px_rgba(236,72,153,0.5)]">{mapData.calculatedStats?.bpm}</span>
+          </div>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-blue-500/70 text-[9px] uppercase tracking-widest mb-0.5">LEN</span>
+            <span className="text-blue-100 drop-shadow-[0_0_5px_rgba(59,130,246,0.5)]">
+              {Math.floor((mapData.total_length || 0) / 60)}:{String((mapData.total_length || 0) % 60).padStart(2, '0')}
+            </span>
           </div>
         </div>
         
