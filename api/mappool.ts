@@ -5,7 +5,7 @@ let cachedToken = '';
 let tokenExpiresAt = 0;
 
 const SHEET1_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?output=csv';
-const SHEET2_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?gid=1413426737&single=true&output=csv';
+const SHEET2_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?gid=97481118&single=true&output=csv';
 
 const DELETED_MAP_IDS = ["4376789", "4384670", "4393055"];
 
@@ -79,13 +79,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const data1 = Papa.parse(text1, { header: true, skipEmptyLines: true }).data.map((r: any) => ({ ...r, Tournament: 'Personal' }));
     
-    // Sheet 2 does not have a header row, so we parse it as an array of arrays and map it manually
-    const parsed2 = Papa.parse(text2, { header: false, skipEmptyLines: true }).data as string[][];
-    const data2 = parsed2.map(row => ({
-      Tournament: row[0] || 'Unknown',
-      Mod: row[1] || '',
-      'Map URL': row[2] || ''
-    }));
+    // Sheet 2 now has headers (Tournament, Mod, Map URL)
+    const data2 = Papa.parse(text2, { header: true, skipEmptyLines: true }).data;
     
     const combinedData = [...data1, ...data2];
     
