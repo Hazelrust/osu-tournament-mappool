@@ -72,7 +72,7 @@ function App() {
         ]);
         
         const combinedData = [...data1, ...data2];
-        const limit = pLimit(5); // Only 5 concurrent requests to avoid rate limits
+        const limit = pLimit(20); // Only 20 concurrent requests to avoid rate limits
 
         const fetchPromises = combinedData.map((row) => limit(async () => {
           const modSlot = row['Mod'];
@@ -94,9 +94,6 @@ function App() {
             parsed.tournament = tournament;
             return parsed;
           }
-
-          // Intentional delay to prevent rate limiting
-          await new Promise(r => setTimeout(r, 200));
 
           try {
             // Use the Vercel backend which caches responses
