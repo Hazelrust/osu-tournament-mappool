@@ -10,6 +10,7 @@ function App() {
   const [activeSubTourney, setActiveSubTourney] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('Default'); // Default, Stars, BPM, Length
+  const [visibleCount, setVisibleCount] = useState(50);
   
   // Reset pagination when filters or sort change
   useEffect(() => {
