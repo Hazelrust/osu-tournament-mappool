@@ -91,11 +91,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     // 2. Map items and prepare osu! IDs
     const validRows = [];
+    const seenMaps = new Set<string>();
 
     // Filter valid rows and find missing ones
     for (const row of combinedData) {
       const modSlot = row['Mod'];
       const mapUrl = row['Map URL'];
+      const tournament = row['Tournament'] || row[0] || 'Unknown';
+      
       let beatmapId = null;
       if (mapUrl && typeof mapUrl === 'string') {
         const match = mapUrl.match(/(?:#osu\/|beatmaps\/|b\/)(\d+)/);
@@ -103,6 +106,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       
       if (!beatmapId || DELETED_MAP_IDS.includes(beatmapId)) continue;
+      
+      // Deduplicate maps within the same tournament
+      const uniqueKey = `${tournament}-${beatmapId}`;
+      if (seenMaps.has(uniqueKey)) continue;
+      seenMaps.add(uniqueKey);
       
       validRows.push({ row, beatmapId, modSlot });
     }
