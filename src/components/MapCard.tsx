@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 export interface MapData {
   id?: string;
@@ -62,10 +62,23 @@ function getModColor(modSlot: string) {
 
 export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlot: string }) {
   if (!mapData) return null;
-  const bgUrl = mapData.beatmapset?.covers?.cover || '';
   const safeModSlot = modSlot || '';
   const archetype = ARCHETYPE_MAP[safeModSlot.toUpperCase().trim()];
 
+  const tourneyName = mapData.tournament || 'Unknown';
+  
+  const getTourneyGroup = (name: string) => {
+    if (!name) return 'Unknown';
+    if (name === 'Personal') return 'Personal';
+    const owcMatch = name.match(/OWC \d{4}/);
+    if (owcMatch) return owcMatch[0];
+    return name.split(' ')[0];
+  };
+
+  const getTourneySub = (name: string, group: string) => {
+    if (name === group) return '';
+    return (name || '').replace(group, '').trim();
+  };
   
   const tourneyGroup = getTourneyGroup(tourneyName);
   const tourneyStage = getTourneySub(tourneyName, tourneyGroup);
