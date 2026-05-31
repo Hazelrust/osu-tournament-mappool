@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const text1 = await res1.text();
     const text2 = await res2.text();
 
-    const data1 = Papa.parse(text1, { header: true, skipEmptyLines: true }).data.map((r: any) => ({ ...r, Tournament: 'Personal' }));
+    const data1 = Papa.parse(text1, { header: true, skipEmptyLines: true }).data.map((r: any) => ({ ...r, Tournament: 'OWC 2023' }));
     
     // Sheet 2 now has headers (Tournament, Mod, Map URL)
     const data2 = Papa.parse(text2, { header: true, skipEmptyLines: true }).data;
