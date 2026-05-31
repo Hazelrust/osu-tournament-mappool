@@ -123,7 +123,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const text2 = await res2.text();
 
     const data1 = Papa.parse(text1, { header: true, skipEmptyLines: true }).data.map((r: any) => ({ ...r, Tournament: 'Personal' }));
-    const data2 = Papa.parse(text2, { header: true, skipEmptyLines: true }).data.map((r: any) => ({ ...r, Tournament: r['Tournament'] || 'Unknown' }));
+    
+    // Sheet 2 does not have a header row, so we parse it as an array of arrays and map it manually
+    const parsed2 = Papa.parse(text2, { header: false, skipEmptyLines: true }).data as string[][];
+    const data2 = parsed2.map(row => ({
+      Tournament: row[0] || 'Unknown',
+      Mod: row[1] || '',
+      'Map URL': row[2] || ''
+    }));
     
     const combinedData = [...data1, ...data2];
     
