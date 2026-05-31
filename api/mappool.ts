@@ -9,54 +9,9 @@ const SHEET2_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lr
 
 const DELETED_MAP_IDS = ["4376789", "4384670", "4393055"];
 
-// Standard pLimit implementation since we don't have p-limit imported here
-function pLimit(concurrency: number) {
-  const queue: Function[] = [];
-  let activeCount = 0;
-
-  const next = () => {
-    activeCount--;
-    if (queue.length > 0) {
-      queue.shift()!();
-    }
-  };
-
-  return (fn: Function) => new Promise<any>((resolve, reject) => {
-    const run = async () => {
-      activeCount++;
-      try {
-        const result = await fn();
-        resolve(result);
-      } catch (err) {
-        reject(err);
-      }
-      next();
-    };
-
-    if (activeCount < concurrency) {
-      run();
-    } else {
-      queue.push(run);
-    }
-  });
-}
-
 function extractBeatmapId(url: string) {
   const match = url.match(/(?:#osu\/|beatmaps\/)(\d+)/);
   return match ? match[1] : null;
-}
-
-function parseOsuMods(modStr: string): string[] {
-  const normalized = modStr.toUpperCase().replace(/[0-9]/g, '');
-  const mods = [];
-  if (normalized.includes('HD')) mods.push('HD');
-  if (normalized.includes('HR')) mods.push('HR');
-  if (normalized.includes('DT')) mods.push('DT');
-  if (normalized.includes('NC')) mods.push('NC');
-  if (normalized.includes('EZ')) mods.push('EZ');
-  if (normalized.includes('FL')) mods.push('FL');
-  if (normalized.includes('HT')) mods.push('HT');
-  return mods;
 }
 
 function calculateMods(baseStats: any, modStr: string) {
@@ -154,42 +109,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       validRows.push({ row, beatmapId, modSlot });
     }
 
-    // 3. Process all rows in parallel fetching osu! data
+    // 3. Process maps in bulk to avoid rate limiting
+    // osu! API allows up to 50 beatmaps per request
+    const chunkSize = 50;
     const finalResult = [];
     
-    const fetchPromises = validRows.map(({ row, beatmapId, modSlot }) => limit(async () => {
-      // For backend we just fetch each map individually to keep attributes simple, but with extreme concurrency
-      try {
-        const mapRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+    for (let i = 0; i < validRows.length; i += chunkSize) {
+      const chunk = validRows.slice(i, i + chunkSize);
+      const queryParams = chunk.map(c => `ids[]=${c.beatmapId}`).join('&');
+      
+      const bulkRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps?${queryParams}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!bulkRes.ok) {
+        console.error("Bulk fetch failed:", await bulkRes.text());
+        continue;
+      }
+      
+      const bulkData = await bulkRes.json();
+      const beatmaps = bulkData.beatmaps || [];
+      
+      // Match returned maps back to their rows
+      for (const mapData of beatmaps) {
+        const rowData = chunk.find(c => String(c.beatmapId) === String(mapData.id));
+        if (!rowData) continue;
         
-        if (!mapRes.ok) return null; // Map deleted or failed
+        const modSlot = rowData.modSlot;
         
-        const mapData = await mapRes.json();
-        const modArray = parseOsuMods(modSlot);
-        
-        // Fetch Mod specific Star Rating
-        if (modArray.length > 0) {
-          const attrRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}/attributes`, {
-            method: 'POST',
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              mods: modArray.map(m => ({ acronym: m }))
-            })
-          });
-
-          if (attrRes.ok) {
-             const attrData = await attrRes.json();
-             if (attrData.attributes?.star_rating) {
-               mapData.difficulty_rating = attrData.attributes.star_rating;
-             }
-          }
-        }
-
         const calculatedStats = calculateMods({
           cs: mapData.cs,
           ar: mapData.ar,
@@ -198,23 +145,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           bpm: mapData.bpm
         }, modSlot);
 
-        return {
+        finalResult.push({
           ...mapData,
           calculatedStats,
           modSlot,
-          tournament: row['Tournament']
-        };
-      } catch (err) {
-        return null; // Skip on error
+          tournament: rowData.row['Tournament'] || rowData.row[0] || 'Unknown' // Handle both object and array formats
+        });
       }
-    }));
-
-    const resolvedMaps = await Promise.all(fetchPromises);
-    const validMaps = resolvedMaps.filter(m => m !== null);
+    }
 
     // Cache the entire finished mappool array on Vercel Edge for 24 hours
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');
-    return res.status(200).json(validMaps);
+    return res.status(200).json(finalResult);
 
   } catch (err: any) {
     console.error('API Error:', err);
