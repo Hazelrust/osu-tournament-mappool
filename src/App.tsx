@@ -205,7 +205,7 @@ function App() {
         ) : (
           <>
             {/* Filters & Sorting */}
-            <div className="flex flex-col gap-6 mb-10 sm:mb-12 bg-[#1a1a20] p-4 sm:p-6 rounded-2xl border border-white/5 shadow-xl">
+            <div id="map-grid" className="flex flex-col gap-6 mb-10 sm:mb-12 bg-[#1a1a20] p-4 sm:p-6 rounded-2xl border border-white/5 shadow-xl scroll-mt-6">
               
               <div className="flex flex-col gap-6 w-full overflow-hidden">
                 {/* Main Tournament Filter */}
@@ -331,7 +331,7 @@ function App() {
               </div>
             ) : (
               <>
-                <div id="map-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr scroll-mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr">
                   {filteredMaps.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((map, idx) => (
                     <MapCard 
                       key={`${map.modSlot}-${map.id}-${idx}`} 
