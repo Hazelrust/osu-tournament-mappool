@@ -90,8 +90,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const combinedData = [...data1, ...data2];
     
     // 2. Map items and prepare osu! IDs
-    const limit = pLimit(30); // 30 concurrent backend connections
-    const mapDictionary: Record<string, any> = {};
     const validRows = [];
 
     // Filter valid rows and find missing ones
