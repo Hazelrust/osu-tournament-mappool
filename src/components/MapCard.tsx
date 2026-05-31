@@ -54,6 +54,8 @@ function getModColor(modSlot: string) {
   if (mod.startsWith('HD')) return 'bg-yellow-500/90 text-slate-900';
   if (mod.startsWith('DT')) return 'bg-purple-600/90 text-white';
   if (mod.startsWith('EZ')) return 'bg-green-600/90 text-white';
+  if (mod.startsWith('FM')) return 'bg-orange-500/90 text-white';
+  if (mod.startsWith('TB')) return 'bg-black text-white border border-slate-700 shadow-[0_0_10px_rgba(0,0,0,0.5)]';
   return 'bg-slate-600/90 text-white';
 }
 

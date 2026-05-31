@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Search, Filter } from 'lucide-react';
+import { Loader2, Search, Filter, Star, Activity, Clock, ListOrdered, ArrowDownUp } from 'lucide-react';
 import MapCard from './components/MapCard';
 function App() {
   const [maps, setMaps] = useState<any[]>([]);
@@ -258,23 +258,36 @@ function App() {
                   </div>
                 </div>
 
-                {/* Sort Dropdown */}
-                <div className="flex items-center gap-3 shrink-0 lg:ml-auto lg:pl-6 lg:border-l border-white/5 pt-4 lg:pt-0">
-                  <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider hidden sm:block">Sort By:</span>
-                  <div className="flex bg-white/5 rounded-lg p-1 w-full sm:w-auto">
-                    {['Default', 'Stars', 'BPM', 'Length'].map(s => (
-                      <button
-                        key={s}
-                        onClick={() => setSortBy(s)}
-                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-300 ${
-                          sortBy === s 
-                            ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.4)]'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                {/* Fancy Sort Toggle */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0 lg:ml-auto lg:pl-6 lg:border-l border-white/5 pt-4 lg:pt-0">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <ArrowDownUp className="w-4 h-4" />
+                    <span className="text-sm font-semibold uppercase tracking-wider">Sort By</span>
+                  </div>
+                  <div className="flex bg-slate-950/50 p-1.5 rounded-xl border border-white/10 shadow-inner w-full sm:w-auto">
+                    {[
+                      { id: 'Default', label: 'Stage', icon: ListOrdered, activeColor: 'bg-white/20 text-white shadow-sm' },
+                      { id: 'Stars', label: 'Stars', icon: Star, activeColor: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' },
+                      { id: 'BPM', label: 'BPM', icon: Activity, activeColor: 'bg-pink-500/20 text-pink-400 border border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.2)]' },
+                      { id: 'Length', label: 'Length', icon: Clock, activeColor: 'bg-blue-500/20 text-blue-400 border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' }
+                    ].map(s => {
+                      const Icon = s.icon;
+                      const isActive = sortBy === s.id;
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => setSortBy(s.id)}
+                          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 ${
+                            isActive 
+                              ? s.activeColor
+                              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
+                          }`}
+                        >
+                          <Icon className={`w-4 h-4 ${isActive ? '' : 'opacity-70'}`} />
+                          <span className={isActive ? '' : 'hidden sm:block'}>{s.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
