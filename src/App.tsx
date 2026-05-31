@@ -83,12 +83,14 @@ function App() {
 
         const flushBatch = () => {
           if (currentBatch.length > 0) {
+            const batchToFlush = [...currentBatch]; // Clone it so it doesn't get wiped before React processes it!
+            currentBatch = [];
+            
             setMaps(prev => {
               // prevent duplicates just in case
-              const newMaps = currentBatch.filter(newMap => !prev.some(p => p.id === newMap.id && p.modSlot === newMap.modSlot));
+              const newMaps = batchToFlush.filter(newMap => !prev.some(p => p.id === newMap.id && p.modSlot === newMap.modSlot));
               return [...prev, ...newMaps];
             });
-            currentBatch = [];
           }
         };
 
