@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export interface MapData {
   beatmapset?: {
@@ -37,7 +37,7 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
             {modSlot}
           </span>
           <span className="font-semibold text-yellow-400 bg-black/50 px-2 rounded">
-            {mapData.difficulty_rating}★
+            {Number(mapData.difficulty_rating).toFixed(2)}★
           </span>
         </div>
         
