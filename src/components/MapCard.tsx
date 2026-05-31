@@ -1,3 +1,5 @@
+import { ExternalLink } from 'lucide-react';
+
 export interface MapData {
   id?: string;
   url?: string;
@@ -61,56 +63,89 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
   const archetype = ARCHETYPE_MAP[modSlot.toUpperCase().trim()];
   
   return (
-    <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-700 bg-slate-900 group transition-transform hover:-translate-y-1">
+    <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-700/50 bg-slate-900 group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-slate-500/50 flex flex-col h-full">
+      {/* Background Image with animated overlay */}
       <div 
-        className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-60 transition-opacity"
+        className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300"
         style={{ backgroundImage: `url(${bgUrl})` }}
       />
-      <div className="relative p-4 flex flex-col h-full bg-gradient-to-t from-slate-950/90 to-transparent">
-        <div className="flex justify-between items-start mb-12 mt-2">
-          <div className="flex flex-col gap-2 items-start">
-            <div className="flex flex-col gap-1">
-              <span className={`font-bold text-xl px-3 py-1 rounded-md shadow-sm w-fit ${getModColor(modSlot)}`}>
-                {modSlot}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
+      
+      {/* Hover Affordance (External Link Icon) */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
+        <div className="bg-black/60 p-4 rounded-full backdrop-blur-md transform scale-75 group-hover:scale-100 transition-transform duration-300">
+          <ExternalLink className="w-8 h-8 text-white" />
+        </div>
+      </div>
+
+      <div className="relative p-5 flex flex-col h-full z-10">
+        
+        {/* Top Header: Mod & Difficulty */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex flex-col gap-1.5 items-start">
+            <span className={`font-black text-xl px-3 py-0.5 rounded shadow-sm tracking-tight ${getModColor(modSlot)}`}>
+              {modSlot}
+            </span>
+            {archetype && (
+              <span className="text-[10px] font-bold tracking-widest uppercase text-slate-300 bg-black/40 px-2 py-0.5 rounded backdrop-blur-md border border-white/10 shadow-sm">
+                {archetype}
               </span>
-              {archetype && (
-                <span className="text-[11px] font-bold tracking-wide uppercase text-slate-300 bg-black/60 px-2 py-0.5 rounded shadow-sm border border-white/5 w-fit">
-                  {archetype}
-                </span>
-              )}
-            </div>
+            )}
+          </div>
+          
+          <div className="flex flex-col items-end gap-1.5">
+            <span className="font-bold text-yellow-400 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded border border-yellow-500/20 shadow-sm flex items-center gap-1">
+              {Number(mapData.difficulty_rating).toFixed(2)}<span className="text-sm">★</span>
+            </span>
             {mapData.tournament && (
-              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded shadow-md backdrop-blur-md ${
+              <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md ${
                 mapData.tournament === 'Personal' 
-                  ? 'bg-blue-600/80 text-white border border-blue-400/30'
-                  : 'bg-orange-500/80 text-white border border-orange-300/30'
+                  ? 'bg-blue-900/60 text-blue-200 border border-blue-500/30'
+                  : 'bg-orange-900/60 text-orange-200 border border-orange-500/30'
               }`}>
                 {mapData.tournament}
               </span>
             )}
           </div>
-          <span className="font-semibold text-yellow-400 bg-black/50 px-2 rounded mt-1">
-            {Number(mapData.difficulty_rating).toFixed(2)}★
-          </span>
         </div>
         
-        <div className="mt-auto">
-          <h3 className="text-xl font-bold text-white leading-tight truncate">{mapData.beatmapset?.title}</h3>
-          <p className="text-sm text-slate-300 mb-2 truncate">{mapData.beatmapset?.artist}</p>
+        {/* Middle: Map Info */}
+        <div className="mt-auto pt-4 flex flex-col gap-1">
+          <h3 className="text-xl font-bold text-white leading-tight line-clamp-1 group-hover:text-pink-300 transition-colors">
+            {mapData.beatmapset?.title}
+          </h3>
+          <p className="text-sm text-slate-400 line-clamp-1 font-medium">
+            {mapData.beatmapset?.artist}
+          </p>
           
-          <div className="flex justify-between text-xs text-slate-400 mb-3 border-b border-slate-700/50 pb-2">
-            <span className="truncate flex-1">[{mapData.version}] mapped by {mapData.beatmapset?.creator}</span>
-          </div>
-
-          <div className="grid grid-cols-5 gap-2 text-center text-xs font-mono font-semibold text-white">
-            <div className="bg-slate-800/80 rounded py-1">CS <br/><span className="text-blue-300">{mapData.calculatedStats?.cs}</span></div>
-            <div className="bg-slate-800/80 rounded py-1">AR <br/><span className="text-red-300">{mapData.calculatedStats?.ar}</span></div>
-            <div className="bg-slate-800/80 rounded py-1">OD <br/><span className="text-green-300">{mapData.calculatedStats?.od}</span></div>
-            <div className="bg-slate-800/80 rounded py-1">HP <br/><span className="text-yellow-300">{mapData.calculatedStats?.hp}</span></div>
-            <div className="bg-slate-800/80 rounded py-1">BPM <br/><span className="text-purple-300">{mapData.calculatedStats?.bpm}</span></div>
+          <div className="flex justify-between items-center text-[11px] text-slate-500 mt-1 mb-3">
+            <span className="truncate flex-1 font-medium bg-white/5 px-2 py-0.5 rounded-full w-fit max-w-[80%] border border-white/5">
+              <span className="text-slate-300">{mapData.version}</span> by {mapData.beatmapset?.creator}
+            </span>
           </div>
         </div>
-        <a href={mapData.url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" aria-label="View on osu! website" />
+
+        {/* Bottom: Stats Pills */}
+        <div className="flex gap-1.5 text-[11px] font-mono font-semibold text-slate-300 mt-2 flex-wrap">
+          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
+            <span className="text-slate-500">CS</span><span className="text-white">{mapData.calculatedStats?.cs}</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
+            <span className="text-slate-500">AR</span><span className="text-white">{mapData.calculatedStats?.ar}</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
+            <span className="text-slate-500">OD</span><span className="text-white">{mapData.calculatedStats?.od}</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50">
+            <span className="text-slate-500">HP</span><span className="text-white">{mapData.calculatedStats?.hp}</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/50 ml-auto">
+            <span className="text-slate-500">BPM</span><span className="text-pink-300">{mapData.calculatedStats?.bpm}</span>
+          </div>
+        </div>
+        
+        {/* Invisible Click Target */}
+        <a href={mapData.url} target="_blank" rel="noreferrer" className="absolute inset-0 z-30 cursor-pointer" aria-label={`View ${mapData.beatmapset?.title} on osu!`} />
       </div>
     </div>
   );
