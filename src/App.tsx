@@ -11,7 +11,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('Default'); // Default, Stars, BPM, Length
   const [sortDesc, setSortDesc] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 24;
   const [playingMapId, setPlayingMapId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -34,7 +35,7 @@ function App() {
   
   // Reset pagination when filters or sort change
   useEffect(() => {
-    setVisibleCount(50);
+    setCurrentPage(1);
   }, [activeModFilter, activeMainTourney, activeSubTourney, searchQuery, sortBy, sortDesc]);
 
   useEffect(() => {
@@ -331,7 +332,7 @@ function App() {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr">
-                  {filteredMaps.slice(0, visibleCount).map((map, idx) => (
+                  {filteredMaps.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((map, idx) => (
                     <MapCard 
                       key={`${map.modSlot}-${map.id}-${idx}`} 
                       mapData={map} 
@@ -342,13 +343,32 @@ function App() {
                   ))}
                 </div>
                 
-                {visibleCount < filteredMaps.length && (
-                  <div className="flex justify-center mt-10 sm:mt-12">
+                {Math.ceil(filteredMaps.length / pageSize) > 1 && (
+                  <div className="flex justify-center items-center gap-4 mt-10 sm:mt-12">
                     <button 
-                      onClick={() => setVisibleCount(prev => prev + 50)}
-                      className="w-full sm:w-auto px-8 py-3 bg-pink-600 hover:bg-pink-500 text-white rounded-full font-bold transition-all shadow-[0_0_15px_rgba(236,72,153,0.3)] hover:shadow-[0_0_25px_rgba(236,72,153,0.5)] active:scale-95"
+                      disabled={currentPage === 1}
+                      onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="px-6 py-2 sm:py-2.5 rounded-full bg-[#1a1a20] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all border border-white/10 shadow-lg font-semibold text-sm sm:text-base"
                     >
-                      Load More Maps ({filteredMaps.length - visibleCount} remaining)
+                      Previous
+                    </button>
+                    
+                    <span className="text-slate-400 font-medium text-sm sm:text-base">
+                      Page <span className="text-white font-black">{currentPage}</span> of {Math.ceil(filteredMaps.length / pageSize)}
+                    </span>
+
+                    <button 
+                      disabled={currentPage === Math.ceil(filteredMaps.length / pageSize)}
+                      onClick={() => {
+                        setCurrentPage(p => Math.min(Math.ceil(filteredMaps.length / pageSize), p + 1));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="px-6 py-2 sm:py-2.5 rounded-full bg-[#1a1a20] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all border border-white/10 shadow-lg font-semibold text-sm sm:text-base"
+                    >
+                      Next
                     </button>
                   </div>
                 )}
