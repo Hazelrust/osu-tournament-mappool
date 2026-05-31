@@ -167,7 +167,7 @@ function App() {
             </span>
           </h2>
           <p className="text-slate-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Your team's central hub for map practice. Track, filter, and drill the hardest pools in the scene without missing a beat.
+            The ultimate training ground for your roster. Analyze the pool, identify your picks, and grind the hardest mechanics before match day.
           </p>
         </div>
 
@@ -187,88 +187,88 @@ function App() {
             {/* Filters & Sorting */}
             <div className="flex flex-col gap-6 mb-10 sm:mb-12 bg-[#1a1a20] p-4 sm:p-6 rounded-2xl border border-white/5 shadow-xl">
               
-              <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6">
-                <div className="flex flex-col gap-6 w-full xl:w-auto overflow-hidden">
-                  {/* Main Tournament Filter */}
-                  <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-                    <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
-                      <Filter className="w-4 h-4" />
-                      <span className="text-sm font-semibold uppercase tracking-wider">Tournament</span>
-                    </div>
-                    {mainTourneys.map((tourney) => (
-                      <button
-                        key={tourney}
-                        onClick={() => {
-                          setActiveMainTourney(tourney);
-                          setActiveSubTourney('ALL'); // Reset sub filter
-                        }}
-                        className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
-                          activeMainTourney === tourney 
-                            ? 'bg-[#ff66aa] text-white shadow-[0_0_15px_rgba(255,102,170,0.4)]'
-                            : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        {tourney}
-                      </button>
-                    ))}
+              <div className="flex flex-col gap-6 w-full overflow-hidden">
+                {/* Main Tournament Filter */}
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+                  <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
+                    <Filter className="w-4 h-4" />
+                    <span className="text-sm font-semibold uppercase tracking-wider">Tournament</span>
                   </div>
-
-                  {/* Sub Tournament Filter (Only show if there are sub options besides ALL) */}
-                  {availableSubTourneys.length > 1 && (
-                    <>
-                      <div className="w-full h-px bg-white/5 hidden sm:block" />
-                      <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-                        <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
-                          <span className="text-sm font-semibold uppercase tracking-wider sm:pl-6">Stage</span>
-                        </div>
-                        {availableSubTourneys.map((sub) => (
-                          <button
-                            key={sub}
-                            onClick={() => setActiveSubTourney(sub)}
-                            className={`shrink-0 px-3 py-1.5 sm:py-1 rounded-md text-sm sm:text-xs font-bold transition-all duration-200 ${
-                              activeSubTourney === sub 
-                                ? 'bg-white/20 text-white shadow-sm'
-                                : 'bg-transparent text-slate-400 hover:bg-white/5 hover:text-white'
-                            }`}
-                          >
-                            {sub}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-
-                  <div className="w-full h-px bg-white/5" />
-
-                  {/* Mod Slot Filter */}
-                  <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-                    <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
-                      <Filter className="w-4 h-4" />
-                      <span className="text-sm font-semibold uppercase tracking-wider">Mod Slot</span>
-                    </div>
-                    {modCategories.map((mod) => (
-                      <button
-                        key={mod}
-                        onClick={() => setActiveModFilter(mod)}
-                        className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
-                          activeModFilter === mod 
-                            ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
-                            : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        {mod}
-                      </button>
-                    ))}
-                  </div>
+                  {mainTourneys.map((tourney) => (
+                    <button
+                      key={tourney}
+                      onClick={() => {
+                        setActiveMainTourney(tourney);
+                        setActiveSubTourney('ALL'); // Reset sub filter
+                      }}
+                      className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                        activeMainTourney === tourney 
+                          ? 'bg-[#ff66aa] text-white shadow-[0_0_15px_rgba(255,102,170,0.4)]'
+                          : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {tourney}
+                    </button>
+                  ))}
                 </div>
 
+                {/* Sub Tournament Filter (Only show if there are sub options besides ALL) */}
+                {availableSubTourneys.length > 1 && (
+                  <>
+                    <div className="w-full h-px bg-white/5 hidden sm:block" />
+                    <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+                      <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
+                        <span className="text-sm font-semibold uppercase tracking-wider sm:pl-6">Stage</span>
+                      </div>
+                      {availableSubTourneys.map((sub) => (
+                        <button
+                          key={sub}
+                          onClick={() => setActiveSubTourney(sub)}
+                          className={`shrink-0 px-3 py-1.5 sm:py-1 rounded-md text-sm sm:text-xs font-bold transition-all duration-200 ${
+                            activeSubTourney === sub 
+                              ? 'bg-white/20 text-white shadow-sm'
+                              : 'bg-transparent text-slate-400 hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div className="w-full h-px bg-white/5" />
+
+                {/* Mod Slot Filter */}
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+                  <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
+                    <Filter className="w-4 h-4" />
+                    <span className="text-sm font-semibold uppercase tracking-wider">Mod Slot</span>
+                  </div>
+                  {modCategories.map((mod) => (
+                    <button
+                      key={mod}
+                      onClick={() => setActiveModFilter(mod)}
+                      className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                        activeModFilter === mod 
+                          ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                          : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {mod}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="w-full h-px bg-white/5" />
+
                 {/* Fancy Sort Toggle (Volume-like buttons) */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0 xl:ml-auto xl:pl-6 xl:border-l border-white/5 pt-4 xl:pt-0 w-full xl:w-auto">
-                  <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar w-full">
+                  <div className="flex items-center gap-2 mr-2 text-slate-400 min-w-[100px] shrink-0">
                     <ArrowDownUp className="w-4 h-4" />
                     <span className="text-sm font-semibold uppercase tracking-wider">Sort By</span>
                   </div>
-                  <div className="flex bg-[#111115] p-1.5 rounded-xl border border-white/10 shadow-inner w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                  <div className="flex bg-[#111115] p-1.5 rounded-xl border border-white/10 shadow-inner w-full sm:w-auto">
                     {[
                       { id: 'Default', label: 'Stage', icon: ListOrdered, activeColor: 'bg-white/20 text-white shadow-sm' },
                       { id: 'Stars', label: 'Stars', icon: Star, activeColor: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' },

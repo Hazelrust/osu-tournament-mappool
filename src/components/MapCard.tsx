@@ -67,23 +67,25 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
   const archetype = ARCHETYPE_MAP[safeModSlot.toUpperCase().trim()];
 
   
-  return (
-    <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-700/50 bg-slate-900 group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-slate-500/50 flex flex-col h-full">
-      {/* Background Image with animated overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300"
-        style={{ backgroundImage: `url(${bgUrl})` }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
-      
-      {/* Hover Affordance (External Link Icon) */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
-        <div className="bg-black/60 p-4 rounded-full backdrop-blur-md transform scale-75 group-hover:scale-100 transition-transform duration-300">
-          <ExternalLink className="w-8 h-8 text-white" />
-        </div>
-      </div>
+  const tourneyGroup = getTourneyGroup(tourneyName);
+  const tourneyStage = getTourneySub(tourneyName, tourneyGroup);
 
-      <div className="relative p-5 flex flex-col h-full z-10">
+  return (
+    <div className="group relative bg-[#111115] rounded-xl overflow-hidden border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:border-[#ff66aa]/50 hover:shadow-[0_4px_30px_rgba(255,102,170,0.2)] transition-all duration-300">
+      
+      {/* Background Image Wrapper */}
+      {mapData.beatmapset?.covers?.cover && (
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+          style={{ backgroundImage: `url(${mapData.beatmapset.covers.cover})` }}
+        />
+      )}
+      
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#111115] via-[#111115]/60 to-[#111115]/30 z-10" />
+
+      {/* Content */}
+      <div className="relative z-20 p-4 h-full flex flex-col">
         
         {/* Top Header: Mod & Difficulty */}
         <div className="flex justify-between items-start mb-6">
@@ -96,14 +98,21 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
                 {archetype}
               </span>
             )}
-            {mapData.tournament && (
-              <span className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-md ${
-                mapData.tournament === 'Personal' 
-                  ? 'bg-blue-900/60 text-blue-200 border border-blue-500/30'
-                  : 'bg-orange-900/60 text-orange-200 border border-orange-500/30'
-              }`}>
-                {mapData.tournament}
-              </span>
+            {tourneyGroup && (
+              <div className="flex gap-1.5 mt-0.5">
+                <span className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-md ${
+                  tourneyGroup === 'Personal' 
+                    ? 'bg-blue-900/60 text-blue-200 border border-blue-500/30'
+                    : 'bg-orange-900/60 text-orange-200 border border-orange-500/30'
+                }`}>
+                  {tourneyGroup}
+                </span>
+                {tourneyStage && (
+                  <span className="text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-md bg-white/10 text-slate-200 border border-white/20">
+                    {tourneyStage}
+                  </span>
+                )}
+              </div>
             )}
           </div>
           
