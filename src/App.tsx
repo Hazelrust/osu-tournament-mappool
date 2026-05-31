@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Loader2, Search, Filter, Star, Activity, Clock, ListOrdered, ArrowDownUp } from 'lucide-react';
 import MapCard from './components/MapCard';
 function App() {
@@ -12,6 +12,25 @@ function App() {
   const [sortBy, setSortBy] = useState('Default'); // Default, Stars, BPM, Length
   const [sortDesc, setSortDesc] = useState(true);
   const [visibleCount, setVisibleCount] = useState(50);
+  const [playingMapId, setPlayingMapId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePreview = (mapId: string, previewUrl: string) => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.volume = 0.3;
+      audioRef.current.onended = () => setPlayingMapId(null);
+    }
+    
+    if (playingMapId === mapId) {
+      audioRef.current.pause();
+      setPlayingMapId(null);
+    } else {
+      audioRef.current.src = previewUrl;
+      audioRef.current.play().catch(e => console.error("Audio playback failed", e));
+      setPlayingMapId(mapId);
+    }
+  };
   
   // Reset pagination when filters or sort change
   useEffect(() => {
@@ -319,7 +338,13 @@ function App() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr">
                   {filteredMaps.slice(0, visibleCount).map((map, idx) => (
-                    <MapCard key={`${map.modSlot}-${map.id}-${idx}`} mapData={map} modSlot={map.modSlot} />
+                    <MapCard 
+                      key={`${map.modSlot}-${map.id}-${idx}`} 
+                      mapData={map} 
+                      modSlot={map.modSlot} 
+                      playingMapId={playingMapId}
+                      onTogglePreview={togglePreview}
+                    />
                   ))}
                 </div>
                 

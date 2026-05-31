@@ -1,11 +1,14 @@
 
 
+import { Play, Pause } from 'lucide-react';
+
 export interface MapData {
   id?: string;
   url?: string;
   version?: string;
   difficulty_rating?: number;
   total_length?: number;
+  beatmapset_id?: number;
   beatmapset?: {
     title?: string;
     artist?: string;
@@ -60,7 +63,14 @@ function getModColor(modSlot: string) {
   return 'bg-slate-600/90 text-white';
 }
 
-export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlot: string }) {
+interface MapCardProps {
+  mapData: MapData;
+  modSlot: string;
+  playingMapId?: string | null;
+  onTogglePreview?: (mapId: string, previewUrl: string) => void;
+}
+
+export default function MapCard({ mapData, modSlot, playingMapId, onTogglePreview }: MapCardProps) {
   if (!mapData) return null;
   const safeModSlot = modSlot || '';
   const archetype = ARCHETYPE_MAP[safeModSlot.toUpperCase().trim()];
@@ -140,10 +150,33 @@ export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlo
         </div>
         
         {/* Middle: Map Info */}
-        <div className="mt-auto pt-6 flex flex-col gap-1">
-          <h3 className="text-2xl font-black text-white leading-tight line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-pink-400 group-hover:to-indigo-400 transition-all drop-shadow-md">
-            {mapData.beatmapset?.title}
-          </h3>
+        <div className="mt-auto pt-6 flex flex-col gap-1 relative z-40 pointer-events-auto">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-2xl font-black text-white leading-tight line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-pink-400 group-hover:to-indigo-400 transition-all drop-shadow-md">
+              {mapData.beatmapset?.title}
+            </h3>
+            {mapData.beatmapset_id && onTogglePreview && (
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onTogglePreview(mapData.id || '', `https://b.ppy.sh/preview/${mapData.beatmapset_id}.mp3`);
+                }}
+                title="Preview Song"
+                className={`shrink-0 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${
+                  playingMapId === mapData.id 
+                    ? 'bg-[#ff66aa] border-[#ff66aa] shadow-[0_0_15px_rgba(255,102,170,0.6)] text-white scale-110'
+                    : 'bg-black/40 border-white/10 hover:bg-[#ff66aa]/80 hover:border-[#ff66aa] hover:shadow-[0_0_10px_rgba(255,102,170,0.4)] text-slate-300 hover:text-white'
+                }`}
+              >
+                {playingMapId === mapData.id ? (
+                  <Pause className="w-4 h-4 fill-current" />
+                ) : (
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                )}
+              </button>
+            )}
+          </div>
           <p className="text-sm font-semibold text-pink-300/90 line-clamp-1 drop-shadow-md tracking-wide">
             {mapData.beatmapset?.artist}
           </p>
