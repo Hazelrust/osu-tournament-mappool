@@ -178,14 +178,14 @@ function App() {
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-24">
         
         {/* Hero Title */}
-        <div className="text-center mb-12 sm:mb-16 mt-4 sm:mt-8 px-2">
-          <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tighter mb-4 sm:mb-6">
+        <div className="text-center mb-8 sm:mb-16 mt-2 sm:mt-8 px-2">
+          <h2 className="text-3xl sm:text-6xl md:text-7xl font-black tracking-tighter mb-3 sm:mb-6 leading-tight">
             Master your <br className="sm:hidden" />
             <span className="text-[#ff66aa]">
               Tournament Pool
             </span>
           </h2>
-          <p className="text-slate-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
+          <p className="text-slate-400 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto font-medium px-4">
             The ultimate training ground for your roster. Analyze the pool, identify your picks, and grind the hardest mechanics before match day.
           </p>
         </div>
@@ -220,7 +220,7 @@ function App() {
                         setActiveMainTourney(tourney);
                         setActiveSubTourney('ALL'); // Reset sub filter
                       }}
-                      className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                      className={`shrink-0 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 ${
                         activeMainTourney === tourney 
                           ? 'bg-[#ff66aa] text-white shadow-[0_0_15px_rgba(255,102,170,0.4)]'
                           : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
@@ -268,7 +268,7 @@ function App() {
                     <button
                       key={mod}
                       onClick={() => setActiveModFilter(mod)}
-                      className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                      className={`shrink-0 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 ${
                         activeModFilter === mod 
                           ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
                           : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
@@ -300,17 +300,11 @@ function App() {
                         <button
                           key={s.id}
                           onClick={() => {
-                            if (isActive) {
-                              setSortDesc(!sortDesc);
-                            } else {
-                              setSortBy(s.id);
-                              setSortDesc(true); // Default to Descending on new sort
-                            }
+                            if (isActive) setSortDesc(!sortDesc);
+                            else { setSortBy(s.id); setSortDesc(true); }
                           }}
-                          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 ${
-                            isActive 
-                              ? s.activeColor
-                              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
+                          className={`relative flex items-center justify-center gap-1.5 px-2 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex-1 sm:flex-none ${
+                            isActive ? s.activeColor : 'text-slate-400 hover:text-white hover:bg-white/5'
                           }`}
                         >
                           <div className="flex flex-col items-center gap-0.5 mr-1">

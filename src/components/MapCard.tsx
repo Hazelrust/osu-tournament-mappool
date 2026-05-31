@@ -108,22 +108,22 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
       <div className="absolute inset-0 bg-gradient-to-t from-[#111115] via-[#111115]/60 to-[#111115]/30 z-10" />
 
       {/* Content */}
-      <div className="relative z-20 p-4 h-full flex flex-col">
+      <div className="relative z-20 p-3 sm:p-4 h-full flex flex-col">
         
         {/* Top Header: Mod & Difficulty */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-4 sm:mb-6">
           <div className="flex flex-col gap-1.5 items-start">
-            <span className={`font-black text-xl px-3 py-0.5 rounded shadow-[0_0_15px_rgba(0,0,0,0.5)] tracking-tight ${getModColor(modSlot)}`}>
+            <span className={`font-black text-lg sm:text-xl px-2 sm:px-3 py-0.5 rounded shadow-[0_0_15px_rgba(0,0,0,0.5)] tracking-tight ${getModColor(modSlot)}`}>
               {modSlot}
             </span>
             {archetype && (
-              <span className="text-[10px] font-bold tracking-widest uppercase text-slate-200 bg-black/60 px-2 py-0.5 rounded backdrop-blur-md border border-white/10 shadow-sm">
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-slate-200 bg-black/60 px-2 py-0.5 rounded backdrop-blur-md border border-white/10 shadow-sm">
                 {archetype}
               </span>
             )}
             {tourneyGroup && (
               <div className="flex gap-1.5 mt-0.5">
-                <span className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-md ${
+                <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-sm backdrop-blur-md ${
                   tourneyGroup === 'Personal' 
                     ? 'bg-blue-900/60 text-blue-200 border border-blue-500/30'
                     : 'bg-orange-900/60 text-orange-200 border border-orange-500/30'
@@ -131,7 +131,7 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
                   {tourneyGroup}
                 </span>
                 {tourneyStage && (
-                  <span className="text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-md bg-white/10 text-slate-200 border border-white/20">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-sm backdrop-blur-md bg-white/10 text-slate-200 border border-white/20">
                     {tourneyStage}
                   </span>
                 )}
@@ -140,19 +140,19 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
           </div>
           
           <div className="flex flex-col items-end gap-1.5">
-            <div className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 backdrop-blur-md px-3 py-1 rounded-lg border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
-              <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 text-lg">
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 backdrop-blur-md px-2 sm:px-3 py-1 rounded-lg border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+              <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 text-base sm:text-lg">
                 {Number(mapData.difficulty_rating).toFixed(2)}
               </span>
-              <span className="text-yellow-400 text-sm drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]">★</span>
+              <span className="text-yellow-400 text-xs sm:text-sm drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]">★</span>
             </div>
           </div>
         </div>
         
         {/* Middle: Map Info */}
-        <div className="mt-auto pt-6 flex flex-col gap-1 relative z-40 pointer-events-auto">
+        <div className="mt-auto pt-4 sm:pt-6 flex flex-col gap-1 relative z-40 pointer-events-auto">
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-2xl font-black text-white leading-tight line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-pink-400 group-hover:to-indigo-400 transition-all drop-shadow-md">
+            <h3 className="text-xl sm:text-2xl font-black text-white leading-tight line-clamp-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-pink-400 group-hover:to-indigo-400 transition-all drop-shadow-md">
               {mapData.beatmapset?.title}
             </h3>
             {mapData.beatmapset_id && onTogglePreview && (
@@ -177,13 +177,13 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
               </button>
             )}
           </div>
-          <p className="text-sm font-semibold text-pink-300/90 line-clamp-1 drop-shadow-md tracking-wide">
+          <p className="text-xs sm:text-sm font-semibold text-pink-300/90 line-clamp-1 drop-shadow-md tracking-wide">
             {mapData.beatmapset?.artist}
           </p>
           
-          <div className="flex items-center gap-2 mt-2 mb-4">
+          <div className="flex items-center gap-2 mt-1 sm:mt-2 mb-3 sm:mb-4">
             <div className="h-px bg-white/10 flex-1" />
-            <span className="text-[11px] text-slate-400 font-medium bg-black/40 px-2.5 py-0.5 rounded-full border border-white/5 backdrop-blur-md whitespace-nowrap max-w-[150px] truncate">
+            <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium bg-black/40 px-2 sm:px-2.5 py-0.5 rounded-full border border-white/5 backdrop-blur-md whitespace-nowrap max-w-[120px] sm:max-w-[150px] truncate">
               <span className="text-slate-200 font-bold">{mapData.version}</span> by {mapData.beatmapset?.creator}
             </span>
             <div className="h-px bg-white/10 flex-1" />
@@ -191,25 +191,25 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
         </div>
 
         {/* Bottom: Stats Pills */}
-        <div className="grid grid-cols-5 gap-1.5 text-[11px] font-mono font-bold mt-2">
-          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
-            <span className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">CS</span>
+        <div className="grid grid-cols-5 gap-1 sm:gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold mt-1 sm:mt-2">
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">CS</span>
             <span className="text-white drop-shadow-md">{mapData.calculatedStats?.cs}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
-            <span className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">AR</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">AR</span>
             <span className="text-white drop-shadow-md">{mapData.calculatedStats?.ar}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
-            <span className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">OD</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-slate-500 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">OD</span>
             <span className="text-white drop-shadow-md">{mapData.calculatedStats?.od}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
-            <span className="text-pink-500/70 text-[9px] uppercase tracking-widest mb-0.5">BPM</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-pink-500/70 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">BPM</span>
             <span className="text-pink-100 drop-shadow-[0_0_5px_rgba(236,72,153,0.5)]">{mapData.calculatedStats?.bpm}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1.5 rounded-lg border border-white/5 shadow-inner">
-            <span className="text-blue-500/70 text-[9px] uppercase tracking-widest mb-0.5">LEN</span>
+          <div className="flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm py-1 sm:py-1.5 rounded-lg border border-white/5 shadow-inner">
+            <span className="text-blue-500/70 text-[8px] sm:text-[9px] uppercase tracking-widest mb-0.5">LEN</span>
             <span className="text-blue-100 drop-shadow-[0_0_5px_rgba(59,130,246,0.5)]">
               {Math.floor((mapData.total_length || 0) / 60)}:{String((mapData.total_length || 0) % 60).padStart(2, '0')}
             </span>
