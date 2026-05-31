@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import Papa from 'papaparse';
-import { Loader2, Search, Filter } from 'lucide-react';
+import { Loader2, Search, Filter, Plus } from 'lucide-react';
 import MapCard from './components/MapCard';
+import ImporterModal from './components/ImporterModal';
 import { calculateMods, extractBeatmapId } from './lib/osuUtils';
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7LaX7C-9lrfPPwiX1NXnkhHHXMNQ1SWwn0SyXBIc76gupYUTPrjAe4yPsPjvKpUAhsuqgTvpSU53l/pub?output=csv';
@@ -53,6 +54,7 @@ function App() {
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isImporterOpen, setIsImporterOpen] = useState(false);
 
   useEffect(() => {
     const fetchMappool = async () => {
@@ -158,6 +160,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white font-sans selection:bg-pink-500/30">
+      <ImporterModal isOpen={isImporterOpen} onClose={() => setIsImporterOpen(false)} />
       
       {/* Abstract Background Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -175,17 +178,25 @@ function App() {
             <h1 className="text-xl font-bold tracking-tight hidden sm:block">Practice Hub</h1>
           </div>
 
-          <div className="relative w-full max-w-md ml-4 sm:ml-0">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-400" />
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <button 
+              onClick={() => setIsImporterOpen(true)}
+              className="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-full font-bold text-sm transition-colors shadow-[0_0_15px_rgba(236,72,153,0.3)] hidden sm:flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Import Pool
+            </button>
+            <div className="relative w-full max-w-md ml-4 sm:ml-0">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-400" />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Search by title or artist..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-white/10 rounded-full leading-5 bg-white/5 text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all sm:text-sm"
+              />
             </div>
-            <input 
-              type="text" 
-              placeholder="Search by title or artist..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-white/10 rounded-full leading-5 bg-white/5 text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all sm:text-sm"
-            />
           </div>
         </div>
       </header>
