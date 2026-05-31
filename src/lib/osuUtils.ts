@@ -1,4 +1,12 @@
-export function calculateMods(baseStats: any, modStr: string) {
+export interface BaseStats {
+  cs: number;
+  ar: number;
+  accuracy: number;
+  drain: number;
+  bpm: number;
+}
+
+export function calculateMods(baseStats: BaseStats, modStr: string) {
   const mod = modStr.toUpperCase().replace(/[0-9]/g, ''); // NM1 -> NM
   let { cs, ar, accuracy: od, drain: hp, bpm } = baseStats;
   
@@ -10,11 +18,12 @@ export function calculateMods(baseStats: any, modStr: string) {
   } else if (mod.includes('DT')) {
     bpm = bpm * 1.5;
     // DT formula approximation for AR and OD
-    const msAr = 1200 - 150 * (ar > 5 ? ar - 5 : ar);
+    const msAr = ar > 5 ? 1200 - 150 * (ar - 5) : 1200 + 120 * (5 - ar);
     const dtMsAr = msAr / 1.5;
-    ar = dtMsAr < 300 ? 11 : (dtMsAr < 1200 ? 5 + (1200 - dtMsAr) / 150 : 5);
-    // Simplified OD scaling for UI display
-    od = Math.min(11, od + 2); // Roughly +2 to OD visually
+    ar = dtMsAr < 1200 ? 5 + (1200 - dtMsAr) / 150 : 5 - (dtMsAr - 1200) / 120;
+    const msOd = 80 - 6 * od;
+    const dtMsOd = msOd / 1.5;
+    od = (80 - dtMsOd) / 6;
   } else if (mod.includes('EZ')) {
     cs = cs / 2;
     ar = ar / 2;
