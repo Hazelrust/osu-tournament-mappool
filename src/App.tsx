@@ -331,7 +331,7 @@ function App() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr">
+                <div id="map-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr scroll-mt-6">
                   {filteredMaps.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((map, idx) => (
                     <MapCard 
                       key={`${map.modSlot}-${map.id}-${idx}`} 
@@ -349,7 +349,7 @@ function App() {
                       disabled={currentPage === 1}
                       onClick={() => {
                         setCurrentPage(p => Math.max(1, p - 1));
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        document.getElementById('map-grid')?.scrollIntoView({ behavior: 'smooth' });
                       }}
                       className="px-6 py-2 sm:py-2.5 rounded-full bg-[#1a1a20] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all border border-white/10 shadow-lg font-semibold text-sm sm:text-base"
                     >
@@ -364,7 +364,7 @@ function App() {
                       disabled={currentPage === Math.ceil(filteredMaps.length / pageSize)}
                       onClick={() => {
                         setCurrentPage(p => Math.min(Math.ceil(filteredMaps.length / pageSize), p + 1));
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        document.getElementById('map-grid')?.scrollIntoView({ behavior: 'smooth' });
                       }}
                       className="px-6 py-2 sm:py-2.5 rounded-full bg-[#1a1a20] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all border border-white/10 shadow-lg font-semibold text-sm sm:text-base"
                     >
