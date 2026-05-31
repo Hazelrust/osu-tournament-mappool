@@ -145,7 +145,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const mapUrl = row['Map URL'];
       let beatmapId = null;
       if (mapUrl && typeof mapUrl === 'string') {
-        beatmapId = extractBeatmapId(mapUrl);
+        const match = mapUrl.match(/(?:#osu\/|beatmaps\/|b\/)(\d+)/);
+        beatmapId = match ? match[1] : null;
       }
       
       if (!beatmapId || DELETED_MAP_IDS.includes(beatmapId)) continue;
