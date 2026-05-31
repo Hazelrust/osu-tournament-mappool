@@ -5,6 +5,7 @@ export interface MapData {
   url?: string;
   version?: string;
   difficulty_rating?: number;
+  total_length?: number;
   beatmapset?: {
     title?: string;
     artist?: string;
