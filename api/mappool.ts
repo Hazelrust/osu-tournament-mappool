@@ -154,8 +154,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Cache the finished mappool array on Vercel Edge for just 1 minute so new spreadsheet data appears quickly
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+    // Cache the finished mappool array heavily. The stale-while-revalidate directive ensures users instantly get 
+    // the cached version while Vercel re-fetches from osu! API and Google Sheets in the background.
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=86400');
     return res.status(200).json(finalResult);
 
   } catch (err: any) {
