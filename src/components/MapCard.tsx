@@ -1,6 +1,27 @@
 import React from 'react';
 
-export default function MapCard({ mapData, modSlot }: { mapData: any, modSlot: string }) {
+export interface MapData {
+  beatmapset?: {
+    covers?: {
+      cover?: string;
+    };
+    title?: string;
+    artist?: string;
+    creator?: string;
+  };
+  difficulty_rating?: number;
+  version?: string;
+  calculatedStats?: {
+    cs?: number | string;
+    ar?: number | string;
+    od?: number | string;
+    hp?: number | string;
+    bpm?: number | string;
+  };
+  url?: string;
+}
+
+export default function MapCard({ mapData, modSlot }: { mapData: MapData, modSlot: string }) {
   if (!mapData) return null;
   const bgUrl = mapData.beatmapset?.covers?.cover || '';
   
