@@ -44,24 +44,30 @@ async function getOsuToken() {
     return cachedToken;
   }
   
-  const res = await fetch('https://osu.ppy.sh/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: process.env.VITE_OSU_CLIENT_ID || process.env.OSU_CLIENT_ID,
-      client_secret: process.env.VITE_OSU_CLIENT_SECRET || process.env.OSU_CLIENT_SECRET,
-      grant_type: 'client_credentials',
-      scope: 'public'
-    })
-  });
-  
-  const data = await res.json();
-  if (data.access_token) {
-    cachedToken = data.access_token;
-    tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
-    return cachedToken;
+  try {
+    const res = await fetch('https://osu.ppy.sh/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: Number((process.env.VITE_OSU_CLIENT_ID || process.env.OSU_CLIENT_ID || '').trim()),
+        client_secret: (process.env.VITE_OSU_CLIENT_SECRET || process.env.OSU_CLIENT_SECRET || '').trim(),
+        grant_type: 'client_credentials',
+        scope: 'public'
+      })
+    });
+    
+    const data = await res.json();
+    if (data.access_token) {
+      cachedToken = data.access_token;
+      tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
+      return cachedToken;
+    }
+    console.error("Token fetch failed:", data);
+    return null;
+  } catch (err) {
+    console.error("Failed to fetch token:", err);
+    return null;
   }
-  throw new Error("Failed to get token");
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -88,7 +94,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const validRows = [];
     const seenMaps = new Set<string>();
 
-    // Filter valid rows and find missing ones
     for (const row of combinedData) {
       const modSlot = row['Mod'];
       const mapUrl = row['Map URL'];
@@ -102,7 +107,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       if (!beatmapId || DELETED_MAP_IDS.includes(beatmapId)) continue;
       
-      // Deduplicate maps within the same tournament
       const uniqueKey = `${tournament}-${beatmapId}`;
       if (seenMaps.has(uniqueKey)) continue;
       seenMaps.add(uniqueKey);
@@ -110,57 +114,85 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       validRows.push({ row, beatmapId, modSlot });
     }
 
-    // 3. Process maps in bulk to avoid rate limiting
-    // osu! API allows up to 50 beatmaps per request
-    const chunkSize = 50;
     const finalResult = [];
-    
-    for (let i = 0; i < validRows.length; i += chunkSize) {
-      const chunk = validRows.slice(i, i + chunkSize);
-      const queryParams = chunk.map(c => `ids[]=${c.beatmapId}`).join('&');
-      
-      const bulkRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps?${queryParams}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!bulkRes.ok) {
-        console.error("Bulk fetch failed:", await bulkRes.text());
-        continue;
-      }
-      
-      const bulkData = await bulkRes.json();
-      const beatmaps = bulkData.beatmaps || [];
-      
-      // Match returned maps back to their rows
-      for (const mapData of beatmaps) {
-        const rowData = chunk.find(c => String(c.beatmapId) === String(mapData.id));
-        if (!rowData) continue;
-        const modSlot = rowData.modSlot;
-        
-        const calculatedStats = calculateMods({
-          cs: mapData.cs,
-          ar: mapData.ar,
-          accuracy: mapData.accuracy,
-          drain: mapData.drain,
-          bpm: mapData.bpm
-        }, modSlot);
 
+    if (!token) {
+      // Graceful fallback if osu! credentials fail
+      for (const { row, beatmapId, modSlot } of validRows) {
         finalResult.push({
-          ...mapData,
-          calculatedStats,
+          id: beatmapId,
+          beatmapset: { title: 'osu! API Auth Failed', artist: 'Please configure Vercel Envs' },
+          difficulty_rating: 0,
+          total_length: 0,
+          hit_length: 0,
+          bpm: 0,
+          cs: 0, ar: 0, accuracy: 0, drain: 0,
+          calculatedStats: { cs: 0, ar: 0, od: 0, hp: 0, bpm: 0 },
           modSlot,
-          tournament: rowData.row['Tournament'] || rowData.row[0] || 'Unknown' // Handle both object and array formats
+          tournament: row['Tournament'] || row[0] || 'Unknown',
+          url: `https://osu.ppy.sh/b/${beatmapId}`
         });
+      }
+    } else {
+      // 3. Process maps in bulk with Promise.all
+      const chunkSize = 50;
+      const chunkPromises = [];
+      
+      for (let i = 0; i < validRows.length; i += chunkSize) {
+        const chunk = validRows.slice(i, i + chunkSize);
+        const queryParams = chunk.map(c => `ids[]=${c.beatmapId}`).join('&');
+        
+        chunkPromises.push(
+          fetch(`https://osu.ppy.sh/api/v2/beatmaps?${queryParams}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }).then(res => res.json()).then(data => ({ chunk, beatmaps: data.beatmaps || [] }))
+        );
+      }
+
+      const chunkResults = await Promise.all(chunkPromises);
+
+      for (const { chunk, beatmaps } of chunkResults) {
+        for (const mapData of beatmaps) {
+          const rowData = chunk.find((c: any) => String(c.beatmapId) === String(mapData.id));
+          if (!rowData) continue;
+          const modSlot = rowData.modSlot;
+          
+          const calculatedStats = calculateMods({
+            cs: mapData.cs,
+            ar: mapData.ar,
+            accuracy: mapData.accuracy,
+            drain: mapData.drain,
+            bpm: mapData.bpm
+          }, modSlot);
+
+          let total_length = mapData.total_length;
+          let hit_length = mapData.hit_length;
+          const upperMod = modSlot.toUpperCase();
+          if (upperMod.includes('DT') || upperMod.includes('NC')) {
+            total_length = Math.round(total_length / 1.5);
+            hit_length = Math.round(hit_length / 1.5);
+          } else if (upperMod.includes('HT')) {
+            total_length = Math.round(total_length * 1.5);
+            hit_length = Math.round(hit_length * 1.5);
+          }
+
+          finalResult.push({
+            ...mapData,
+            total_length,
+            hit_length,
+            calculatedStats,
+            modSlot,
+            tournament: rowData.row['Tournament'] || rowData.row[0] || 'Unknown'
+          });
+        }
       }
     }
 
-    // Cache the finished mappool array heavily. The stale-while-revalidate directive ensures users instantly get 
-    // the cached version while Vercel re-fetches from osu! API and Google Sheets in the background.
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=86400');
     return res.status(200).json(finalResult);
 
   } catch (err: any) {
     console.error('API Error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
   }
 }
