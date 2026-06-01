@@ -152,6 +152,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const chunkResults = await Promise.all(chunkPromises);
 
       for (const { chunk, beatmaps } of chunkResults) {
+        // Prepare to fetch attributes for maps with mods in this chunk
+        const attrPromises = beatmaps.map(async (mapData: any) => {
+          const rowData = chunk.find((c: any) => String(c.beatmapId) === String(mapData.id));
+          if (!rowData) return { id: mapData.id, star_rating: mapData.difficulty_rating };
+          
+          const modStr = (rowData.modSlot || '').toUpperCase();
+          const modsObj: any[] = [];
+          if (modStr.includes('DT')) modsObj.push({ acronym: 'DT' });
+          else if (modStr.includes('NC')) modsObj.push({ acronym: 'NC' });
+          else if (modStr.includes('HT')) modsObj.push({ acronym: 'HT' });
+          if (modStr.includes('HR')) modsObj.push({ acronym: 'HR' });
+          else if (modStr.includes('EZ')) modsObj.push({ acronym: 'EZ' });
+
+          if (modsObj.length === 0) return { id: mapData.id, star_rating: mapData.difficulty_rating };
+
+          try {
+            const attrRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${mapData.id}/attributes`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ruleset: "osu", mods: modsObj })
+            });
+            if (attrRes.ok) {
+              const attr = await attrRes.json();
+              if (attr.attributes?.star_rating) return { id: mapData.id, star_rating: attr.attributes.star_rating };
+            }
+          } catch (e) {
+            // ignore
+          }
+          return { id: mapData.id, star_rating: mapData.difficulty_rating };
+        });
+
+        const attrResults = await Promise.all(attrPromises);
+
         for (const mapData of beatmaps) {
           const rowData = chunk.find((c: any) => String(c.beatmapId) === String(mapData.id));
           if (!rowData) continue;
@@ -176,8 +209,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             hit_length = Math.round(hit_length * 1.5);
           }
 
+          const trueStarRating = attrResults.find(a => String(a.id) === String(mapData.id))?.star_rating || mapData.difficulty_rating;
+
           finalResult.push({
             ...mapData,
+            difficulty_rating: trueStarRating,
             total_length,
             hit_length,
             calculatedStats,
