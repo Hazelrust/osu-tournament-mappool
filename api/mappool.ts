@@ -155,24 +155,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const chunkSize = 50;
     const finalResult = [];
     
+    const chunkPromises = [];
     for (let i = 0; i < validRows.length; i += chunkSize) {
       const chunk = validRows.slice(i, i + chunkSize);
       const queryParams = chunk.map(c => `ids[]=${c.beatmapId}`).join('&');
       
-      const bulkRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps?${queryParams}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!bulkRes.ok) {
-        console.error("Bulk fetch failed:", await bulkRes.text());
-        continue;
-      }
-      
-      const bulkData = await bulkRes.json();
-      const beatmaps = bulkData.beatmaps || [];
-      
+      chunkPromises.push(
+        fetch(`https://osu.ppy.sh/api/v2/beatmaps?${queryParams}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => res.json()).then(data => ({ chunk, beatmaps: data.beatmaps || [] }))
+      );
+    }
+
+    const chunkResults = await Promise.all(chunkPromises);
+    
+    for (const { chunk, beatmaps } of chunkResults) {
       for (const mapData of beatmaps) {
-        const rowData = chunk.find(c => String(c.beatmapId) === String(mapData.id));
+        const rowData = chunk.find((c: any) => String(c.beatmapId) === String(mapData.id));
         if (!rowData) continue;
         const modSlot = rowData.modSlot;
         
@@ -205,7 +204,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
 
         finalResult.push(resultItem);
-
       }
     }
 
