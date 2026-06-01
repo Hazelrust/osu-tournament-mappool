@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Loader2, Search, Filter, Star, Activity, Clock, ListOrdered, ArrowDownUp } from 'lucide-react';
 import MapCard from './components/MapCard';
+import type { PerformanceRecord } from './lib/types';
 function App() {
   const [maps, setMaps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,35 @@ function App() {
   const pageSize = 24;
   const [playingMapId, setPlayingMapId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [performanceData, setPerformanceData] = useState<PerformanceRecord[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/performance')
+      .then(r => {
+        if (r.ok) return r.json();
+        return [];
+      })
+      .then(data => setPerformanceData(data))
+      .catch(console.error);
+  }, []);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/performance/sync', { method: 'POST' });
+      if (res.ok) {
+        const { records } = await res.json();
+        setPerformanceData(records);
+      } else if (res.status === 401) {
+        window.location.href = '/api/auth/login';
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setIsSyncing(false);
+  };
 
   const togglePreview = (mapId: string, previewUrl: string) => {
     if (!audioRef.current) {
@@ -158,6 +188,22 @@ function App() {
               O!
             </div>
             <h1 className="text-lg sm:text-xl font-bold tracking-tight hidden md:block text-slate-100">Practice Hub</h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleSync}
+              disabled={isSyncing}
+              className="bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-white transition-colors disabled:opacity-50 text-xs sm:text-sm whitespace-nowrap"
+            >
+              {isSyncing ? 'Syncing...' : 'Sync Recent Plays'}
+            </button>
+            <a 
+              href="/api/auth/login" 
+              className="bg-[#ff66aa] hover:bg-[#ff4d94] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-white transition-colors text-xs sm:text-sm shadow-[0_0_15px_rgba(255,102,170,0.3)] whitespace-nowrap"
+            >
+              Login with osu!
+            </a>
           </div>
 
           <div className="flex items-center w-full max-w-xs sm:max-w-md ml-4 sm:ml-0">
@@ -340,6 +386,7 @@ function App() {
                       modSlot={map.modSlot} 
                       playingMapId={playingMapId}
                       onTogglePreview={togglePreview}
+                      performance={performanceData.find(p => p.beatmapId === Number(map.id))}
                     />
                   ))}
                 </div>
