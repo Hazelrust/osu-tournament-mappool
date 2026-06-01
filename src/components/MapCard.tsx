@@ -76,22 +76,6 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
   const archetype = ARCHETYPE_MAP[safeModSlot.toUpperCase().trim()];
 
   const tourneyName = mapData.tournament || 'Unknown';
-  
-  const getTourneyGroup = (name: string) => {
-    if (!name) return 'Unknown';
-    if (name === 'Personal') return 'Personal';
-    const owcMatch = name.match(/OWC \d{4}/);
-    if (owcMatch) return owcMatch[0];
-    return name.split(' ')[0];
-  };
-
-  const getTourneySub = (name: string, group: string) => {
-    if (name === group) return '';
-    return (name || '').replace(group, '').trim();
-  };
-  
-  const tourneyGroup = getTourneyGroup(tourneyName);
-  const tourneyStage = getTourneySub(tourneyName, tourneyGroup);
 
   return (
     <div className="group relative bg-[#111115] rounded-xl overflow-hidden border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:border-[#ff66aa]/50 hover:shadow-[0_4px_30px_rgba(255,102,170,0.2)] transition-all duration-300">
@@ -121,20 +105,15 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
                 {archetype}
               </span>
             )}
-            {tourneyGroup && (
+            {tourneyName && tourneyName !== 'Unknown' && (
               <div className="flex gap-1.5 mt-0.5">
                 <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-sm backdrop-blur-md ${
-                  tourneyGroup === 'Personal' 
+                  tourneyName === 'Personal' 
                     ? 'bg-blue-900/60 text-blue-200 border border-blue-500/30'
                     : 'bg-orange-900/60 text-orange-200 border border-orange-500/30'
                 }`}>
-                  {tourneyGroup}
+                  {tourneyName}
                 </span>
-                {tourneyStage && (
-                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold px-1.5 sm:px-2 py-0.5 rounded shadow-sm backdrop-blur-md bg-white/10 text-slate-200 border border-white/20">
-                    {tourneyStage}
-                  </span>
-                )}
               </div>
             )}
           </div>
