@@ -48,8 +48,8 @@ async function getOsuToken() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      client_id: process.env.VITE_OSU_CLIENT_ID || process.env.OSU_CLIENT_ID,
-      client_secret: process.env.VITE_OSU_CLIENT_SECRET || process.env.OSU_CLIENT_SECRET,
+      client_id: Number((process.env.VITE_OSU_CLIENT_ID || process.env.OSU_CLIENT_ID || '').trim()),
+      client_secret: (process.env.VITE_OSU_CLIENT_SECRET || process.env.OSU_CLIENT_SECRET || '').trim(),
       grant_type: 'client_credentials',
       scope: 'public'
     })

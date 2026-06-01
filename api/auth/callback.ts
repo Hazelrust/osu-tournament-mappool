@@ -12,8 +12,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: process.env.VITE_OSU_CLIENT_ID || process.env.OSU_CLIENT_ID,
-        client_secret: process.env.VITE_OSU_CLIENT_SECRET || process.env.OSU_CLIENT_SECRET,
+        client_id: Number((process.env.VITE_OSU_CLIENT_ID || process.env.OSU_CLIENT_ID || '').trim()),
+        client_secret: (process.env.VITE_OSU_CLIENT_SECRET || process.env.OSU_CLIENT_SECRET || '').trim(),
         code,
         grant_type: 'authorization_code',
         redirect_uri: `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/api/auth/callback`
