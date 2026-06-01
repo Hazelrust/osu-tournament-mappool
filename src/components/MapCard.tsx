@@ -1,6 +1,5 @@
-
-
 import { Play, Pause } from 'lucide-react';
+import type { PerformanceRecord } from '../lib/types';
 
 export interface MapData {
   id?: string;
@@ -68,9 +67,10 @@ interface MapCardProps {
   modSlot: string;
   playingMapId?: string | null;
   onTogglePreview?: (mapId: string, previewUrl: string) => void;
+  performance?: PerformanceRecord;
 }
 
-export default function MapCard({ mapData, modSlot, playingMapId, onTogglePreview }: MapCardProps) {
+export default function MapCard({ mapData, modSlot, playingMapId, onTogglePreview, performance }: MapCardProps) {
   if (!mapData) return null;
   const safeModSlot = modSlot || '';
   const archetype = ARCHETYPE_MAP[safeModSlot.toUpperCase().trim()];
@@ -195,51 +195,110 @@ export default function MapCard({ mapData, modSlot, playingMapId, onTogglePrevie
           </div>
         </div>
 
-        {/* --- PERFORMANCE TRACKER MOCKUP --- */}
+        {/* --- PERFORMANCE TRACKER --- */}
         <div className="mt-3 sm:mt-4 pt-3 border-t border-white/10 relative z-40 pointer-events-auto flex flex-col gap-2">
           
           {/* Header & Confidence Tag */}
           <div className="flex justify-between items-center">
             <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider uppercase">Your Performance</span>
             
-            {/* Mock Confidence Toggle (Needs Work -> Practicing -> Ready) */}
             <button 
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 hover:bg-emerald-500/30 transition-colors cursor-pointer"
+              onClick={async (e) => { 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                const newConfidence = performance?.confidence === 'practicing' ? 'ready' : (performance?.confidence === 'ready' ? 'needs_work' : 'practicing');
+                await fetch('/api/performance', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    beatmapId: Number(mapData.id),
+                    score: performance?.score || 0,
+                    accuracy: performance?.accuracy || 0,
+                    missCount: performance?.missCount || 0,
+                    confidence: newConfidence,
+                    isManual: true
+                  })
+                });
+                window.location.reload(); // Simple reload for now
+              }}
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                performance?.confidence === 'ready' ? 'bg-emerald-500/20 border-emerald-500/50 hover:bg-emerald-500/30' : 
+                performance?.confidence === 'practicing' ? 'bg-blue-500/20 border-blue-500/50 hover:bg-blue-500/30' : 
+                'bg-red-500/20 border-red-500/50 hover:bg-red-500/30'
+              }`}
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]" />
-              <span className="text-[9px] sm:text-[10px] font-bold text-emerald-300">Ready</span>
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                performance?.confidence === 'ready' ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 
+                performance?.confidence === 'practicing' ? 'bg-blue-400 shadow-[0_0_5px_rgba(59,130,246,0.8)]' : 
+                'bg-red-400 shadow-[0_0_5px_rgba(248,113,113,0.8)]'
+              }`} />
+              <span className={`text-[9px] sm:text-[10px] font-bold ${
+                performance?.confidence === 'ready' ? 'text-emerald-300' : 
+                performance?.confidence === 'practicing' ? 'text-blue-300' : 
+                'text-red-300'
+              }`}>{
+                performance?.confidence === 'ready' ? 'Ready' : 
+                performance?.confidence === 'practicing' ? 'Practicing' : 
+                'Needs Work'
+              }</span>
             </button>
           </div>
 
           {/* Stats Bar */}
           <div 
             className="flex items-center justify-between bg-black/50 backdrop-blur-md rounded-lg p-2 border border-white/5 cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all group/stats"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            title="Click to edit your score"
+            onClick={async (e) => { 
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              const newScoreStr = prompt('Enter Score (e.g. 500000)', performance?.score?.toString() || '');
+              if (!newScoreStr) return;
+              const newScore = parseInt(newScoreStr.replace(/,/g, ''), 10);
+              if (isNaN(newScore)) return;
+
+              await fetch('/api/performance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  beatmapId: Number(mapData.id),
+                  score: newScore,
+                  accuracy: performance?.accuracy || 0,
+                  missCount: performance?.missCount || 0,
+                  confidence: performance?.confidence || 'practicing',
+                  isManual: true
+                })
+              });
+              window.location.reload(); // Simple reload to see changes
+            }}
+            title="Click to edit your score manually"
           >
             <div className="flex flex-col">
               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Score</span>
-              <span className="text-sm font-black text-white group-hover/stats:text-blue-300 transition-colors">945,210</span>
+              <span className="text-sm font-black text-white group-hover/stats:text-blue-300 transition-colors">
+                {performance?.score ? performance.score.toLocaleString() : '---'}
+              </span>
             </div>
             
             <div className="w-px h-6 bg-white/10" />
             
             <div className="flex flex-col items-center">
               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Acc</span>
-              <span className="text-sm font-black text-white">98.45%</span>
+              <span className="text-sm font-black text-white">
+                {performance?.accuracy ? performance.accuracy.toFixed(2) + '%' : '--.--%'}
+              </span>
             </div>
             
             <div className="w-px h-6 bg-white/10" />
             
             <div className="flex flex-col items-end">
               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Miss</span>
-              <span className="text-sm font-black text-red-400">2x</span>
+              <span className="text-sm font-black text-red-400">
+                {performance?.missCount !== undefined && performance?.missCount !== null ? `${performance.missCount}x` : '-'}
+              </span>
             </div>
           </div>
           
         </div>
-        {/* --- END PERFORMANCE TRACKER MOCKUP --- */}
+        {/* --- END PERFORMANCE TRACKER --- */}
         
         {/* Invisible Click Target */}
         <a href={mapData.url} target="_blank" rel="noreferrer" className="absolute inset-0 z-30 cursor-pointer" aria-label={`View ${mapData.beatmapset?.title} on osu!`} />
