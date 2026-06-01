@@ -64,6 +64,50 @@ async function getOsuToken() {
   throw new Error("Failed to get token");
 }
 
+function pLimit(concurrency: number) {
+  const queue: Function[] = [];
+  let activeCount = 0;
+
+  const next = () => {
+    activeCount--;
+    if (queue.length > 0) {
+      queue.shift()!();
+    }
+  };
+
+  return (fn: Function) => new Promise<any>((resolve, reject) => {
+    const run = async () => {
+      activeCount++;
+      try {
+        const result = await fn();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+      next();
+    };
+
+    if (activeCount < concurrency) {
+      run();
+    } else {
+      queue.push(run);
+    }
+  });
+}
+
+function parseOsuMods(modStr: string): string[] {
+  const normalized = modStr.toUpperCase().replace(/[0-9]/g, '');
+  const mods = [];
+  if (normalized.includes('HD')) mods.push('HD');
+  if (normalized.includes('HR')) mods.push('HR');
+  if (normalized.includes('DT')) mods.push('DT');
+  if (normalized.includes('NC')) mods.push('NC');
+  if (normalized.includes('EZ')) mods.push('EZ');
+  if (normalized.includes('FL')) mods.push('FL');
+  if (normalized.includes('HT')) mods.push('HT');
+  return mods;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const token = await getOsuToken();
@@ -88,7 +132,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const validRows = [];
     const seenMaps = new Set<string>();
 
-    // Filter valid rows and find missing ones
     for (const row of combinedData) {
       const modSlot = row['Mod'];
       const mapUrl = row['Map URL'];
@@ -102,7 +145,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       if (!beatmapId || DELETED_MAP_IDS.includes(beatmapId)) continue;
       
-      // Deduplicate maps within the same tournament
       const uniqueKey = `${tournament}-${beatmapId}`;
       if (seenMaps.has(uniqueKey)) continue;
       seenMaps.add(uniqueKey);
@@ -110,10 +152,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       validRows.push({ row, beatmapId, modSlot });
     }
 
-    // 3. Process maps in bulk to avoid rate limiting
-    // osu! API allows up to 50 beatmaps per request
     const chunkSize = 50;
     const finalResult = [];
+    const attrPromises = [];
+    const limit = pLimit(20); // Limit concurrent attribute fetches
     
     for (let i = 0; i < validRows.length; i += chunkSize) {
       const chunk = validRows.slice(i, i + chunkSize);
@@ -131,7 +173,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const bulkData = await bulkRes.json();
       const beatmaps = bulkData.beatmaps || [];
       
-      // Match returned maps back to their rows
       for (const mapData of beatmaps) {
         const rowData = chunk.find(c => String(c.beatmapId) === String(mapData.id));
         if (!rowData) continue;
@@ -145,14 +186,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           bpm: mapData.bpm
         }, modSlot);
 
-        finalResult.push({
+        let total_length = mapData.total_length;
+        let hit_length = mapData.hit_length;
+        const upperMod = modSlot.toUpperCase();
+        if (upperMod.includes('DT') || upperMod.includes('NC')) {
+          total_length = Math.round(total_length / 1.5);
+          hit_length = Math.round(hit_length / 1.5);
+        } else if (upperMod.includes('HT')) {
+          total_length = Math.round(total_length * 1.5);
+          hit_length = Math.round(hit_length * 1.5);
+        }
+
+        const resultItem = {
           ...mapData,
+          total_length,
+          hit_length,
           calculatedStats,
           modSlot,
-          tournament: rowData.row['Tournament'] || rowData.row[0] || 'Unknown' // Handle both object and array formats
-        });
+          tournament: rowData.row['Tournament'] || rowData.row[0] || 'Unknown'
+        };
+
+        finalResult.push(resultItem);
+
+        // Fetch attributes for modded maps
+        const modArray = parseOsuMods(modSlot);
+        if (modArray.length > 0 && modArray.some(m => ['DT', 'HR', 'EZ', 'HT', 'NC', 'FL'].includes(m))) {
+          attrPromises.push(limit(async () => {
+            try {
+              const attrRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${mapData.id}/attributes`, {
+                method: 'POST',
+                headers: { 
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  mods: modArray.map(m => ({ acronym: m }))
+                })
+              });
+              if (attrRes.ok) {
+                const attrData = await attrRes.json();
+                if (attrData.attributes?.star_rating) {
+                  resultItem.difficulty_rating = attrData.attributes.star_rating;
+                }
+              }
+            } catch (e) {
+              console.error("Failed to fetch attributes for", mapData.id);
+            }
+          }));
+        }
       }
     }
+
+    // Wait for all mod attributes to finish fetching before sending response
+    await Promise.all(attrPromises);
 
     // Cache the finished mappool array heavily. The stale-while-revalidate directive ensures users instantly get 
     // the cached version while Vercel re-fetches from osu! API and Google Sheets in the background.
