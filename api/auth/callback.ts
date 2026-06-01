@@ -12,11 +12,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: process.env.VITE_OSU_CLIENT_ID,
-        client_secret: process.env.OSU_CLIENT_SECRET,
+        client_id: process.env.VITE_OSU_CLIENT_ID || process.env.OSU_CLIENT_ID,
+        client_secret: process.env.VITE_OSU_CLIENT_SECRET || process.env.OSU_CLIENT_SECRET,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: `${process.env.VITE_BASE_URL || 'http://localhost:5173'}/api/auth/callback`
+        redirect_uri: `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/api/auth/callback`
       })
     });
     

@@ -154,8 +154,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const chunkSize = 50;
     const finalResult = [];
-    const attrPromises = [];
-    const limit = pLimit(20); // Limit concurrent attribute fetches
     
     for (let i = 0; i < validRows.length; i += chunkSize) {
       const chunk = validRows.slice(i, i + chunkSize);
@@ -208,37 +206,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         finalResult.push(resultItem);
 
-        // Fetch attributes for modded maps
-        const modArray = parseOsuMods(modSlot);
-        if (modArray.length > 0 && modArray.some(m => ['DT', 'HR', 'EZ', 'HT', 'NC', 'FL'].includes(m))) {
-          attrPromises.push(limit(async () => {
-            try {
-              const attrRes = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${mapData.id}/attributes`, {
-                method: 'POST',
-                headers: { 
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  mods: modArray.map(m => ({ acronym: m }))
-                })
-              });
-              if (attrRes.ok) {
-                const attrData = await attrRes.json();
-                if (attrData.attributes?.star_rating) {
-                  resultItem.difficulty_rating = attrData.attributes.star_rating;
-                }
-              }
-            } catch (e) {
-              console.error("Failed to fetch attributes for", mapData.id);
-            }
-          }));
-        }
       }
     }
-
-    // Wait for all mod attributes to finish fetching before sending response
-    await Promise.all(attrPromises);
 
     // Cache the finished mappool array heavily. The stale-while-revalidate directive ensures users instantly get 
     // the cached version while Vercel re-fetches from osu! API and Google Sheets in the background.
