@@ -20,6 +20,20 @@ function App() {
   const [performanceData, setPerformanceData] = useState<PerformanceRecord[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const [user, setUser] = useState<{osu_id: number, username: string} | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => {
+        if (r.ok) return r.json();
+        return null;
+      })
+      .then(data => {
+        if (data && !data.error) setUser(data);
+      })
+      .catch(console.error);
+  }, []);
+
   useEffect(() => {
     fetch('/api/performance')
       .then(r => {
@@ -191,6 +205,11 @@ function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            {user && (
+              <span className="font-bold text-slate-300 text-sm hidden sm:block mr-2">
+                Hi, <span className="text-pink-400">{user.username}</span>!
+              </span>
+            )}
             <button 
               onClick={handleSync}
               disabled={isSyncing}
@@ -198,12 +217,18 @@ function App() {
             >
               {isSyncing ? 'Syncing...' : 'Sync Recent Plays'}
             </button>
-            <a 
-              href="/api/auth/login" 
-              className="bg-[#ff66aa] hover:bg-[#ff4d94] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-white transition-colors text-xs sm:text-sm shadow-[0_0_15px_rgba(255,102,170,0.3)] whitespace-nowrap"
-            >
-              Login with osu!
-            </a>
+            {!user ? (
+              <a 
+                href="/api/auth/login" 
+                className="bg-[#ff66aa] hover:bg-[#ff4d94] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-white transition-colors text-xs sm:text-sm shadow-[0_0_15px_rgba(255,102,170,0.3)] whitespace-nowrap"
+              >
+                Login with osu!
+              </a>
+            ) : (
+              <div className="bg-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-slate-200 text-xs sm:text-sm border border-white/5 whitespace-nowrap">
+                Logged In
+              </div>
+            )}
           </div>
 
           <div className="flex items-center w-full max-w-xs sm:max-w-md ml-4 sm:ml-0">
